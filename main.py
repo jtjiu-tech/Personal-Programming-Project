@@ -31,25 +31,20 @@ CATS = ["🍉🐱", "🥔🐱", "🌈🐱"]
 class Player:
     def __init__(self,name):
         self.name = name
-        self.hand = ["🍉🐱", "🥔🐱", "🌈🐱"]
+        self.hand = []
         self.alive = True
     def show_hand(self):
         print(f"{self.name}, your hand ({self.hand})")
 
 def playernames():
-    allnames = []
     players = []
-    numbplayer = input("How many players are there? (2-4) ")
-    for i in range(int(numbplayer)):
-        name = input(f"Player {i+1}, what is your name?? ")
-        allnames.append(name)
-    for player in allnames:
-        tempp = Player(player)
-        players.append(tempp)
+    num = int(input("How many players are there? (2-4) "))
+    for i in range(num):
+        name = input(f"Player {i+1}, what do I call you? ")
+        players.append(Player(name))
+    print(players)
     return players
-
-
-
+#kind of works?
 
 
 
@@ -67,5 +62,5 @@ def main():
         clear()
 
     playernames()
-    print(playernames)
+
 main()
