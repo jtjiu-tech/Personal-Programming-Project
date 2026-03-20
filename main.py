@@ -15,14 +15,17 @@ def clear():
 
 
 
-#card definitions
-DEFUSE = "🛡️•⩊•"
-NOPE = "🚫"
-ATTACK = "⚔️"
-SHUFFLE = "🔀"
-SKIP = "🏃"
-FAVOR = "🖤"
-SEE = "👀"
+# Definitions
+players = []
+
+#Capitalised all cat cards
+DEFUSE = "🛡️•⩊•(defuse)"
+NOPE = "🚫(nope)"
+ATTACK = "⚔️(attack)"
+SHUFFLE = "🔀(shuffle)"
+SKIP = "🏃(skip)"
+FAVOR = "🖤(favor)"
+SEE = "👀(See the future)"
 KITTEN = "💣"
 
 CATS = ["🍉🐱", "🥔🐱", "🌈🐱"]
@@ -36,22 +39,22 @@ class Player:
     def show_hand(self):
         print(f"{self.name}, your hand ({self.hand})")
 
-def playernames():
-    players = []
-    num = int(input("How many players are there? (2-4) "))
-    for i in range(num):
-        name = input(f"Player {i+1}, what do I call you? ")
-        players.append(Player(name))
-    print(players)
-    return players
-#kind of works?
+def create_deck(numplayer):
+    deck =([ATTACK] * 4 + [NOPE]*5 + [SHUFFLE]*4 + [SEE] * 5 + [FAVOR] * 4 + [SKIP] * 4 + CATS * 4)
+    for i in range(numplayer):
+        deck.append(KITTEN)
+    random.shuffle(deck)
+    print(deck)
+    return deck
 
+            
 
 
 
 def main():
+    clear()
     betterprint("-Welcome to EXPLODDDINGGG KITTTEEENNNSSSS 💣💣💣-\n")
-    betterprint("Do you know how to play?? ")
+    betterprint("Do you know how to play?? (yes or no) ")
     play = input("")
     if play == "yes":
         pass
@@ -60,7 +63,16 @@ def main():
         sleep(5)
         wipe = input("Done reading? Press Enter to move on...")
         clear()
+    
+    num = int(input("How many players are there? (2-4) "))
+    while num <2 or num >4:
+        num = int(input("How many players are there? (2-4) "))
+    for i in range(num):
+        name = input(f"Player {i+1}, what do I call you? ")
+        players.append(Player(name))
+    clear()
+    create_deck(num)
+    
 
-    playernames()
 
 main()
