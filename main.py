@@ -18,7 +18,7 @@ def clear():
 # Definitions
 players = []
 
-#Capitalised all cat cards
+#Capitalised all cat cards + definitions of cards
 DEFUSE = "🛡️•⩊•(defuse)"
 NOPE = "🚫(nope)"
 ATTACK = "⚔️(attack)"
@@ -37,18 +37,25 @@ class Player:
         self.hand = []
         self.alive = True
     def show_hand(self):
-        print(f"{self.name}, your hand ({self.hand})")
+        print(f"{self.name}, here are your cards: ")
+        for item in self.hand:
+            print(item, end=", ")
 
-def create_deck(numplayer):
+def create_deck():
     deck =([ATTACK] * 4 + [NOPE]*5 + [SHUFFLE]*4 + [SEE] * 5 + [FAVOR] * 4 + [SKIP] * 4 + CATS * 4)
-    for i in range(numplayer):
-        deck.append(KITTEN)
     random.shuffle(deck)
-    print(deck)
     return deck
 
-            
-
+def deal_card(players,deck):
+    for player in players:
+        player.hand.append(DEFUSE)
+        while len(player.hand) < 8:
+            card = deck.pop()
+            player.hand.append(card)
+        
+def draw_card():
+    #???
+    pass
 
 
 def main():
@@ -64,15 +71,29 @@ def main():
         wipe = input("Done reading? Press Enter to move on...")
         clear()
     
-    num = int(input("How many players are there? (2-4) "))
-    while num <2 or num >4:
-        num = int(input("How many players are there? (2-4) "))
-    for i in range(num):
+    numplayer = int(input("How many players are there? (2-4) "))
+    while numplayer <2 or numplayer >4:
+        numplayer = int(input("How many players are there? (2-4) "))
+    for i in range(numplayer):
         name = input(f"Player {i+1}, what do I call you? ")
         players.append(Player(name))
     clear()
-    create_deck(num)
+
+    deck = create_deck()
+    deal_card(players,deck)
+
+    #add exploding kittens to deck after players recieved cards 
+    for i in range(numplayer - 1):
+        deck.append(KITTEN)
+    random.shuffle(deck)
     
+    #Show players what their cards are
+    for player in players:
+        player.show_hand()
+        print("")
+        input("Press enter when done... ")
+        clear()
+    print(deck)
 
 
 main()
