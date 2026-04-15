@@ -55,6 +55,12 @@ def show_cards():
         input("Press enter when done... ")
         clear()
 
+def playerslookaway():
+    print("Other players look away now!!")
+    for i in range(5):
+        print(i)
+    clear()
+
 def deal_card(players,deck):
     for player in players:
         player.hand.append(DEFUSE)
@@ -83,11 +89,9 @@ def player_turn(player,deck):
     choice = input("")
     if choice == "1":
         draw_card(player,deck)
-        if KITTEN in player.hand:
-            print("Youre deaddd!!!")
-            #do later
+        check()
     elif choice == "2":
-        pass
+        use_card(player)
     else:
         pass
 
@@ -100,6 +104,27 @@ def draw_card(player,deck):
     player.show_hand()
     input("Done reading? Press Enter to move on...")
     clear()
+
+def use_card(player):
+    playerinput = int(input("Which card would you like to use?"))
+    sleep(1)
+    player.show_hand()
+    player.hand.pop[playerinput-1]
+    player.show_hand()
+
+
+def check(player):
+    if KITTEN in player.hand:
+        print("OH NOOOO!!!! YOU PULLED AN EXPLODING KITTENN!! 💣💣💣")
+        if DEFUSE in player.hand:
+            reply = input("You have a defuse!! Do you wanna use it? (yes or no) ")
+            if reply == "yes":
+                player.hand.pop(DEFUSE)
+                #how would i make it so that players see the announcement where this player used defuse and pulled an exploding kitten?
+                #player given choice to place exploding kitten somewhere
+                #deal with later
+    pass
+
 
 def intro():
     clear()
