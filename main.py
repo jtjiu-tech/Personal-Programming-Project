@@ -1,17 +1,32 @@
 ## Personal Programming Project John Tjiu
 import time
+from colorist import rgb
 import random
 from time import sleep
 import os
+import pygame
 
 #useful functions
 def betterprint(text):
     for character in text:
-        print(character, end = "", flush = True)
+        print(character, end = "",flush = True,)
         sleep(0.02)
+
+def setupMusic():
+    pygame.mixer.init
 
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
+
+#Colours
+def gold(string):
+    rgb(string, 255, 204, 0)
+
+def red(string):
+    rgb(string, 255, 0, 0)
+
+
+
 
 
 
@@ -88,12 +103,19 @@ def player_turn(player,deck):
     print("2) Play a card")
     choice = input("")
     if choice == "1":
-        draw_card(player,deck)
-        check()
+        return choice
     elif choice == "2":
-        use_card(player)
-    else:
-        pass
+        return choice
+    while choice != "1" and choice != "2":
+        print("Not an option")
+        print("1) Draw a card")
+        print("2) Play a card")
+        choice = input("")
+
+
+
+
+
 
 def draw_card(player,deck):
     card = deck.pop(0)
@@ -105,17 +127,76 @@ def draw_card(player,deck):
     input("Done reading? Press Enter to move on...")
     clear()
 
+
 def use_card(player):
-    playerinput = int(input("Which card would you like to use?"))
+    print("Which card would you like to use?")
+    player.show_hand()
+    playerinput = int(input())
     sleep(1)
-    player.show_hand()
-    player.hand.pop[playerinput-1]
-    player.show_hand()
+    while playerinput > len(player.hand):
+        playerinput = int(input("Which card would you like to use?"))
+        player.show_hand()
+    card_selected = player.hand[playerinput-1]
+    return card_selected
+
+
+
+
+def card_played(card_selected,player):
+    if card_selected == DEFUSE:
+        betterprint("You can't use a defuse, you didn't pull an exploding kitten...")
+        sleep(1)
+        clear()
+        use_card(player)
+    elif card_selected in CATS:
+        cat_combos()
+    elif card_selected == ATTACK:
+        attack()
+    elif card_selected == NOPE:
+        nope()
+    elif card_selected == SKIP:
+        skip()
+    elif card_selected == SHUFFLE:
+        shuffle()
+    elif card_selected == FAVOR:
+        favor()
+    elif card_selected == SEE:
+        seethefuture()
+
+
+def attack():
+    pass
+
+def nope():
+    pass
+
+def skip():
+    pass
+
+def shuffle():
+    pass
+
+def favor():
+    pass
+
+def seethefuture():
+    pass
+
+def cat_combos(player,players):
+    for cat in player.items(CATS):
+        if cat > 2:
+            choice = input(f"You have 2 {cat}. Play the pair? (yes/no)")
+            player.hand.remove(cat)
+            player.hand.remove(cat)
+            
+
+
+    
 
 
 def check(player):
     if KITTEN in player.hand:
-        print("OH NOOOO!!!! YOU PULLED AN EXPLODING KITTENN!! 💣💣💣")
+        betterprint("OH NOOOO!!!! YOU PULLED AN EXPLODING KITTENN!! 💣💣💣")
         if DEFUSE in player.hand:
             reply = input("You have a defuse!! Do you wanna use it? (yes or no) ")
             if reply == "yes":
@@ -142,7 +223,6 @@ def intro():
 
 def main():
     intro()
-    
     numplayer = int(input("How many players are there? (2-4) "))
     while numplayer <2 or numplayer >4:
         numplayer = int(input("How many players are there? (2-4) "))
@@ -161,9 +241,17 @@ def main():
     random.shuffle(deck)
     while True:
         for player in players:
-            player_turn(player,deck)
+            choice = player_turn(player,deck)
+            if choice == "1":
+                draw_card(player,deck)
+                check(player)
+            elif choice == "2":
+                card_selected = use_card(player)
+                card_played(card_selected,player)
+
+            
         
 
     
 
-main()
+
