@@ -54,6 +54,7 @@ class Player:
         self.name = name
         self.hand = []
         self.alive = True
+        self.extra_turns = 0
     def show_hand(self):
         i = 0
         print(f"{self.name}, Here are your cards: ")
@@ -94,7 +95,7 @@ def show_cards():
 
 def playerslookaway():
     print("Other players look away now!!")
-    for i in range(5):
+    for i in range(5,0,-1):
         print(i)
     clear()
 
@@ -109,12 +110,11 @@ def deal_card(players,deck):
 def getting_card():
     print("Wait")
     select = "Getting card..."
-    for i in range(5):
-        select += "."
-        print(select, end = "\r")
-        sleep(0.3)
-    sleep(1)
-    print(" ", len(select))
+    for i in range(3):
+        sleep(0.5)
+        print(".", end="", flush=True)
+    print()
+    sleep(0.5)
     clear()
 
 
@@ -146,6 +146,7 @@ def draw_card(player,deck):
     player.show_hand()
     input("Done reading? Press Enter to move on...")
     clear()
+    return check(player)
 
 
 def use_card(player):
@@ -155,7 +156,7 @@ def use_card(player):
     while True:
         try:
             playerinput = int(input())
-            if 0 < playerinput < len(player.hand):
+            if 1 <= playerinput <= len(player.hand):
                 break
             betterprint(f"Enter a number between 1 and {len(player.hand)}")
         except ValueError:
@@ -172,7 +173,7 @@ def card_played(card_selected,player,players,deck):
         betterprint("You can't use a defuse, you didn't pull an exploding kitten...")
         sleep(1)
         clear()
-        return use_card(player)
+        return None
     elif card_selected in CATS:
         return cat_combos(player,players)
     elif card_selected == ATTACK:
@@ -187,11 +188,21 @@ def card_played(card_selected,player,players,deck):
         return favor(player,players)
     elif card_selected == SEE:
         return seethefuture(deck)
+    return None
 
 
 def attack(player,players):
     betterprint(f"{player.name} played ATTACK! Next player takes 2 turns\n")
     sleep(1)
+    current_index = player.index(player)
+    #loops through every player starting with the next player
+    for i in range(1,len(players)):
+        #calculates index of next player (wraps around)
+        next_player = players[(current_index + i) % len(players)]
+        if next_player.alive:
+            next_player.extra_turns += 1
+            break
+
     return "attack"
     #handle in main loop
 
@@ -230,7 +241,7 @@ def favor(current_player,players):
     while True:
         try:
             card = int(card)
-            if 1 < card < len(target.hand):
+            if 1 <= card <= len(target.hand):
                 break
             else:
                 card = input(f"invalid choice!!! Choose a number between 1 and {len(target.hand)}")
@@ -328,18 +339,18 @@ def check(player):
         if DEFUSE in player.hand:
             reply = input("You have a defuse!! Do you wanna use it? (yes or no) ")
             if reply.lower() == "yes":
-                player.hand.pop(DEFUSE)
-                player.hand.pop(KITTEN)
+                player.hand.remove(DEFUSE)
+                player.hand.remove(KITTEN)
                 betterprint("DEFUSE is used! You survived!")
                 return True
             else:
-                player.hand.pop(KITTEN)
+                player.hand.remove(KITTEN)
                 player.alive = False
                 betterprint(f"{player.name} has exploded 💥 , They're out of the game!!")
                 sleep(1)
                 return False
         else:
-            player.hand.pop(KITTEN)
+            player.hand.remove(KITTEN)
             player.alive = False
             betterprint(f"{player.name} has exploded 💥 , They're out of the game!!")
             sleep(1)
@@ -398,29 +409,47 @@ def main():
 
     while sum(player.alive for player in players) > 1:
         player = players[current]
+
         if not player.alive:
-            current = current + 1
-        player = players[current]
+            current = (current + 1) % len(players)
+            continue
+
+        if player.extra_turns > 0:
+            print(f"{player.name} has {player.extra_turns} extra turn(s)!\n")
+            player.extra_turns -= 1
         
-        choice = player_turn(player)
-        if choice == "1":
-            draw_card(player,deck)
-            check(player)
-        elif choice == "2":
-            card_selected = use_card(player)
-            card_played(card_selected,player,players,deck)
-        elif choice == "3":
-            player.show_hand()
-            input("Done reading? press enter to continue")
-            clear()
-            player_turn(player)
+        else:
+            choice = player_turn(player)
 
-        current = (current+1) % len(players)
+            if choice == "1":
+                if draw_card(player,deck) == False:
+                    current = (current + 1) % len(players)
+                    continue 
+            elif choice == "2":
+                card_selected = use_card(player)
+                if card_selected:
+                    result = card_played(card_selected,player,players,deck)
+                    if result == "skipped":
+                        current = (current+1) % len(players)
+                        continue
+            elif choice == "3":
+                player.show_hand()
+                clear()
+                continue
+
+        if player.extra_turns == 0:
+            current = (current + 1) % len(players)
+
+        else:
+            #player still has the extra turn so loop on same player
+            pass
 
 
-    winner = (player for player in players)
-    betterprint(f"{winner.name} is the winner!!!")
-            
+    for player in players:
+        if player.alive:
+            betterprint(f"\n🏆 {player.name} is the winner!!! 🏆\n")
+            break
+
 main()
         
 
