@@ -126,8 +126,8 @@ def player_turn(player):
     clear()
     while True:
         betterprint(f"{player.name}, what would you like to do?\n")
-        print("1) End your turn and draw a card")
-        print("2) Play a card")
+        print("1) Play a card")
+        print("2) End your turn and draw a card")
         print("3) Display your cards")
         choice = input("")
         if choice in ["1","2","3"]:
@@ -469,7 +469,7 @@ def main():
                 input("Done reading? Press Enter to move on...")
                 clear()
                 continue
-            
+
 
 
     for player in players:
