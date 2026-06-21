@@ -13,7 +13,7 @@ def betterprint(text):
         sleep(0.02)
 
 def setupMusic():
-    pygame.mixer.init
+    pygame.mixer.init()
 
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -57,8 +57,7 @@ class Player:
     def show_hand(self):
         i = 0
         print(f"{self.name}, Here are your cards: ")
-        for item in self.hand:
-            i +=1
+        for i,item in enumerate(self.hand,1):
             print(f"{i}. {item}")
 
 def select_target(current_player, players):
@@ -74,7 +73,7 @@ def select_target(current_player, players):
     
     while True:
         choice = int(choice)
-        if 0 < choice < len(available):
+        if 1 <= choice <= len(available):
             return available[choice - 1]
         else:
             choice = input(f"Enter a number between 1 and {len(available)}:  ")
@@ -131,7 +130,7 @@ def player_turn(player):
         if choice in ["1","2","3"]:
             return choice
         else:
-            choice = input("Not an option\n")
+            print("Not an option\n")
 
 
 
@@ -154,10 +153,13 @@ def use_card(player):
     betterprint("Which card would you like to use? (enter a number)\n")
     player.show_hand()
     while True:
-        playerinput = int(input())
-        if 0 < playerinput < len(player.hand):
-            break
-        betterprint(f"Enter a number between 1 and {len(player.hand)}")
+        try:
+            playerinput = int(input())
+            if 0 < playerinput < len(player.hand):
+                break
+            betterprint(f"Enter a number between 1 and {len(player.hand)}")
+        except ValueError:
+            betterprint(f"Enter a number between 1 and {len(player.hand)}")
     card_selected = player.hand[playerinput - 1]
     player.hand.pop(playerinput - 1)
     return card_selected
@@ -172,35 +174,37 @@ def card_played(card_selected,player,players,deck):
         clear()
         return use_card(player)
     elif card_selected in CATS:
-        cat_combos(player,players)
+        return cat_combos(player,players)
     elif card_selected == ATTACK:
-        attack(player,players)
+        return attack(player,players)
     elif card_selected == NOPE:
-        nope()
+        return nope()
     elif card_selected == SKIP:
-        skip(player)
-        return "Skipped"
+        return skip(player)
     elif card_selected == SHUFFLE:
-        shuffle(deck)
+        return shuffle(deck)
     elif card_selected == FAVOR:
-        favor(player,players)
+        return favor(player,players)
     elif card_selected == SEE:
-        seethefuture(deck)
+        return seethefuture(deck)
 
 
 def attack(player,players):
     betterprint(f"{player.name} played ATTACK! Next player takes 2 turns\n")
     sleep(1)
     return "attack"
-
+    #handle in main loop
 
 def nope():
-    pass
+    betterprint("NOPE! The previous action is cancelled\n")
+    return "nope"
+    #handle in main loop
 
 def skip(player):
     betterprint(f"{player.name} used SKIP! Their turn is skipped\n")
     sleep(1)
     return "skipped"
+    #handle in main loop
 
 def shuffle(deck):
     betterprint("Shuffling the deck...\n")
@@ -208,6 +212,7 @@ def shuffle(deck):
     sleep(1)
     betterprint("Deck shuffled")
     return "shuffled"
+    #should work
 
 def favor(current_player,players):
     target = select_target(current_player,players)
@@ -222,11 +227,21 @@ def favor(current_player,players):
     target.show_hand()
     card = input(f"{target.name}, which card would you give to {current_player.name}? (enter number): ")
     while True:
-        card = int(card)
-        if 1 < card < len(target.hand):
-            break
-        else:
-            card = input(f"invalid choice!!! Choose a number between 1 and {len(target.hand)}")
+        try:
+            card = int(card)
+            if 1 < card < len(target.hand):
+                break
+            else:
+                card = input(f"invalid choice!!! Choose a number between 1 and {len(target.hand)}")
+        except ValueError:
+            print(f"Invalid choice!!! Choose a number between 1 and {len(target.hand)}")
+
+    cardindex = card -1
+    stolencard = target.hand.pop(cardindex)
+    current_player.hand.append(stolencard)
+    betterprint(f"{current_player.name} has recieved {stolencard} from {target.name}!")
+    return "favor_done"
+    #should work
 
 
 def seethefuture(deck):
@@ -244,11 +259,39 @@ def seethefuture(deck):
     input("Press enter to continue...")
     clear()
     return "Seen_the_future"
+    #should work
 
 def cat_combos(player,players):
-    betterprint(f"{player.name} played a cat card!")
-    return "cat_played"
-            
+    cat_cards_in_hand = [card for card in player.hand if card in CATS]
+    
+    if len(cat_cards_in_hand) <2:
+        betterprint("You don't have enough cat cards to make a combo! You need at least 2 cat cards.")
+        return "cat_failed"
+
+    cats = []
+    for cat in CATS:
+        if cat_cards_in_hand.count(cat) >= 2:
+            cats.append(cat)
+    
+    if not cats:
+        betterprint("You don't have two of the same cat cards to make a combo!!!")
+        betterprint("You have:\n")
+        for cat in CATS:
+            count = cat_cards_in_hand.count(cat)
+            if count > 0:
+                print(f"- {cat}: {count}")
+        sleep(2)
+        return "cat_failed"
+
+    betterprint("You have these cats with 2 or more copies:\n")
+
+    for i,cat in enumerate(cats,1):
+        count = cat_cards_in_hand.count(cat)
+        print(f"{i}: {cat} (x{count})")
+    
+    while True:
+        pass
+    
 
 
     
