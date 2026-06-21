@@ -434,7 +434,9 @@ def main():
                         current = (current+1) % len(players)
                         continue
             elif choice == "3":
-                player.show_cards()
+                player.show_hand()
+                input("Done reading? Press Enter to move on...")
+                clear()
                 clear()
                 continue
 
