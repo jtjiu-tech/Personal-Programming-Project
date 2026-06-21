@@ -56,7 +56,7 @@ class Player:
         self.alive = True
         self.extra_turns = 0
         self.has_played_attack = False
-        self.has_played_attack = False
+        self.has_played_skip = False
 
     def show_hand(self):
         i = 0
