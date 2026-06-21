@@ -246,13 +246,7 @@ def favor(current_player,players):
 
 
 def seethefuture(deck):
-    select = "Looking into the future..."
-    for i in range(5):
-        select += "."
-        print(select, end = "\r")
-        sleep(0.3)
-    sleep(1)
-    print(" ", len(select))
+    betterprint("You see the future! Here are the next three cards in the deck:")
     top_cards = deck[:3]
     for i,card in enumerate(top_cards,1):
         print(f"{i}: {card}")
