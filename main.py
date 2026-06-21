@@ -61,6 +61,26 @@ class Player:
             i +=1
             print(f"{i}. {item}")
 
+def select_target(current_player, players):
+    available = [p for p in players if p.alive and p != current_player]
+    # checks if the list is empty
+    if not available:
+        betterprint("No other players available!")
+        return None
+    betterprint("Choose a target player\n")
+    for i,player in enumerate(available):
+        print(f"{i+1} {player.name}")
+    choice = input("Enter player name\n")
+    
+    while True:
+        choice = int(choice)
+        if 0 < choice < len(available):
+            return available[choice - 1]
+        else:
+            choice = input(f"Enter a number between 1 and {len(available)}:  ")
+
+
+
 def create_deck():
     deck =([ATTACK] * 4 + [NOPE]*5 + [SHUFFLE]*4 + [SEE] * 5 + [FAVOR] * 4 + [SKIP] * 4 + CATS * 4)
     random.shuffle(deck)
@@ -102,23 +122,16 @@ def getting_card():
 
 def player_turn(player):
     clear()
-    betterprint(f"{player.name}, what would you like to do?\n")
-    print("1) Draw a card")
-    print("2) Play a card")
-    print("3) Display your cards")
-    choice = input("")
-    while choice != "1" and choice != "2" and choice != "3":
-        if choice == "1":
-            return choice
-        elif choice == "2":
-            return choice
-        elif choice == "3":
-            return choice
-        print("Not an option")
+    while True:
+        betterprint(f"{player.name}, what would you like to do?\n")
         print("1) Draw a card")
         print("2) Play a card")
         print("3) Display your cards")
         choice = input("")
+        if choice in ["1","2","3"]:
+            return choice
+        else:
+            choice = input("Not an option\n")
 
 
 
@@ -138,66 +151,103 @@ def draw_card(player,deck):
 
 def use_card(player):
     clear()
-    betterprint("Which card would you like to use?\n")
+    betterprint("Which card would you like to use? (enter a number)\n")
     player.show_hand()
-    playerinput = int(input())
-    sleep(1)
-    while playerinput > len(player.hand):
-        playerinput = int(input("Invalid input, which card would you like to use?"))
-        player.show_hand()
-    card_selected = player.hand[playerinput-1]
-    player.hand.pop(playerinput-1)
+    while True:
+        playerinput = int(input())
+        if 0 < playerinput < len(player.hand):
+            break
+        betterprint(f"Enter a number between 1 and {len(player.hand)}")
+    card_selected = player.hand[playerinput - 1]
+    player.hand.pop(playerinput - 1)
     return card_selected
 
 
 
 
-def card_played(card_selected,player):
+def card_played(card_selected,player,players,deck):
     if card_selected == DEFUSE:
         betterprint("You can't use a defuse, you didn't pull an exploding kitten...")
         sleep(1)
         clear()
         return use_card(player)
     elif card_selected in CATS:
-        cat_combos()
+        cat_combos(player,players)
     elif card_selected == ATTACK:
-        attack()
+        attack(player,players)
     elif card_selected == NOPE:
         nope()
     elif card_selected == SKIP:
-        skip()
+        skip(player)
         return "Skipped"
     elif card_selected == SHUFFLE:
-        shuffle()
+        shuffle(deck)
     elif card_selected == FAVOR:
-        favor()
+        favor(player,players)
     elif card_selected == SEE:
-        seethefuture()
+        seethefuture(deck)
 
 
-def attack(player):
-    while ATTACK not in player.hand:
-        print(f"{player} played a card")
+def attack(player,players):
+    betterprint(f"{player.name} played ATTACK! Next player takes 2 turns\n")
+    sleep(1)
+    return "attack"
 
 
 def nope():
     pass
 
-def skip():
+def skip(player):
+    betterprint(f"{player.name} used SKIP! Their turn is skipped\n")
+    sleep(1)
+    return "skipped"
 
-    pass
+def shuffle(deck):
+    betterprint("Shuffling the deck...\n")
+    random.shuffle(deck)
+    sleep(1)
+    betterprint("Deck shuffled")
+    return "shuffled"
 
-def shuffle():
-    pass
+def favor(current_player,players):
+    target = select_target(current_player,players)
+    if target is None:
+        return "favor_failed"
 
-def favor():
-    pass
+    betterprint(f"{current_player.name} is asking for a card from {target.name}!")
 
-def seethefuture():
-    pass
+    sleep(1)
+
+    betterprint(f"{target.name}, here are your cards:")
+    target.show_hand()
+    card = input(f"{target.name}, which card would you give to {current_player.name}? (enter number): ")
+    while True:
+        card = int(card)
+        if 1 < card < len(target.hand):
+            break
+        else:
+            card = input(f"invalid choice!!! Choose a number between 1 and {len(target.hand)}")
+
+
+def seethefuture(deck):
+    select = "Looking into the future..."
+    for i in range(5):
+        select += "."
+        print(select, end = "\r")
+        sleep(0.3)
+    sleep(1)
+    print(" ", len(select))
+    top_cards = deck[:3]
+    for i,card in enumerate(top_cards,1):
+        print(f"{i}: {card}")
+    sleep(2)
+    input("Press enter to continue...")
+    clear()
+    return "Seen_the_future"
 
 def cat_combos(player,players):
-    pass
+    betterprint(f"{player.name} played a cat card!")
+    return "cat_played"
             
 
 
@@ -207,6 +257,7 @@ def cat_combos(player,players):
 def check(player):
     if KITTEN in player.hand:
         betterprint("OH NOOOO!!!! YOU PULLED AN EXPLODING KITTENN!! 💣💣💣")
+        sleep(1)
         if DEFUSE in player.hand:
             reply = input("You have a defuse!! Do you wanna use it? (yes or no) ")
             if reply == "yes":
