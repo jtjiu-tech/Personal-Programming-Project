@@ -55,6 +55,9 @@ class Player:
         self.hand = []
         self.alive = True
         self.extra_turns = 0
+        self.has_played_attack = False
+        self.has_played_attack = False
+
     def show_hand(self):
         i = 0
         print(f"{self.name}, Here are your cards: ")
@@ -123,7 +126,7 @@ def player_turn(player):
     clear()
     while True:
         betterprint(f"{player.name}, what would you like to do?\n")
-        print("1) Draw a card")
+        print("1) End your turn and draw a card")
         print("2) Play a card")
         print("3) Display your cards")
         choice = input("")
@@ -177,10 +180,12 @@ def card_played(card_selected,player,players,deck):
     elif card_selected in CATS:
         return cat_combos(player,players)
     elif card_selected == ATTACK:
+        player.has_played_attack = True
         return attack(player,players)
     elif card_selected == NOPE:
         return nope()
     elif card_selected == SKIP:
+        player.has_played_skip = True
         return skip(player)
     elif card_selected == SHUFFLE:
         return shuffle(deck)
@@ -194,13 +199,13 @@ def card_played(card_selected,player,players,deck):
 def attack(player,players):
     betterprint(f"{player.name} played ATTACK! Next player takes 2 turns\n")
     sleep(1)
-    current_index = player.index(player)
+    current_index = players.index(player)
     #loops through every player starting with the next player
     for i in range(1,len(players)):
         #calculates index of next player (wraps around)
         next_player = players[(current_index + i) % len(players)]
         if next_player.alive:
-            next_player.extra_turns += 1
+            next_player.extra_turns += 2
             break
 
     return "attack"
@@ -392,7 +397,7 @@ def main():
     intro()
     while True:
         try:
-            numplayer = int(input("how many players are there? (2-4)  "))
+            numplayer = int(input("How many players are there? (2-4)  "))
             if 2<= numplayer <= 4:
                 break
         except ValueError:
@@ -418,38 +423,53 @@ def main():
         if not player.alive:
             current = (current + 1) % len(players)
             continue
+            
+        player.has_played_attack = False
+        player.has_played_skip = False
 
         if player.extra_turns > 0:
             print(f"{player.name} has {player.extra_turns} extra turn(s)!\n")
             player.extra_turns -= 1
         
         else:
+            pass
+        turn_ended = False
+        while not turn_ended:
             choice = player_turn(player)
-
             if choice == "1":
-                if draw_card(player,deck) == False:
-                    current = (current + 1) % len(players)
-                    continue 
-            elif choice == "2":
                 card_selected = use_card(player)
                 if card_selected:
                     result = card_played(card_selected,player,players,deck)
                     if result == "skipped":
-                        current = (current+1) % len(players)
+                        betterprint(f"{player.name}'s turn is over!\n")
+                        turn_ended = True
+                        break
+                    elif result == "attack":
+                        betterprint(f"{player.name}'s turn is over!\n")
+                        turn_ended = True
+                        break
+                    else:
+                        betterprint("You can play another card or end your turn!\n")
+                        sleep(1)
                         continue
+                else:
+                    continue
+        
+            elif choice == "2":
+                betterprint(f"{player.name} ends their turn and draws a card!\n")
+                if draw_card(player,deck) == False:
+                    turn_ended = True
+                    break
+                else:
+                    turn_ended = True
+                    break
+
             elif choice == "3":
                 player.show_hand()
                 input("Done reading? Press Enter to move on...")
                 clear()
-                clear()
                 continue
-
-        if player.extra_turns == 0:
-            current = (current + 1) % len(players)
-
-        else:
-            #player still has the extra turn so loop on same player
-            pass
+            
 
 
     for player in players:
