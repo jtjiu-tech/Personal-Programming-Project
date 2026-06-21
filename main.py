@@ -21,9 +21,11 @@ def clear():
 #Colours
 def gold(string):
     rgb(string, 255, 204, 0)
+    return string
 
 def red(string):
     rgb(string, 255, 0, 0)
+    return string
 
 
 
@@ -32,6 +34,7 @@ def red(string):
 
 # Definitions
 players = []
+
 
 #Capitalised all cat cards + definitions of cards
 DEFUSE = "🛡️•⩊•(defuse)"
@@ -53,7 +56,7 @@ class Player:
         self.alive = True
     def show_hand(self):
         i = 0
-        print(f"{self.name}, here are your cards: ")
+        print(f"{self.name}, Here are your cards: ")
         for item in self.hand:
             i +=1
             print(f"{i}. {item}")
@@ -97,19 +100,24 @@ def getting_card():
 
 
 
-def player_turn(player,deck):
+def player_turn(player):
+    clear()
     betterprint(f"{player.name}, what would you like to do?\n")
     print("1) Draw a card")
     print("2) Play a card")
+    print("3) Display your cards")
     choice = input("")
-    if choice == "1":
-        return choice
-    elif choice == "2":
-        return choice
-    while choice != "1" and choice != "2":
+    while choice != "1" and choice != "2" and choice != "3":
+        if choice == "1":
+            return choice
+        elif choice == "2":
+            return choice
+        elif choice == "3":
+            return choice
         print("Not an option")
         print("1) Draw a card")
         print("2) Play a card")
+        print("3) Display your cards")
         choice = input("")
 
 
@@ -129,14 +137,16 @@ def draw_card(player,deck):
 
 
 def use_card(player):
-    print("Which card would you like to use?")
+    clear()
+    betterprint("Which card would you like to use?\n")
     player.show_hand()
     playerinput = int(input())
     sleep(1)
     while playerinput > len(player.hand):
-        playerinput = int(input("Which card would you like to use?"))
+        playerinput = int(input("Invalid input, which card would you like to use?"))
         player.show_hand()
     card_selected = player.hand[playerinput-1]
+    player.hand.pop(playerinput-1)
     return card_selected
 
 
@@ -147,7 +157,7 @@ def card_played(card_selected,player):
         betterprint("You can't use a defuse, you didn't pull an exploding kitten...")
         sleep(1)
         clear()
-        use_card(player)
+        return use_card(player)
     elif card_selected in CATS:
         cat_combos()
     elif card_selected == ATTACK:
@@ -156,6 +166,7 @@ def card_played(card_selected,player):
         nope()
     elif card_selected == SKIP:
         skip()
+        return "Skipped"
     elif card_selected == SHUFFLE:
         shuffle()
     elif card_selected == FAVOR:
@@ -164,13 +175,16 @@ def card_played(card_selected,player):
         seethefuture()
 
 
-def attack():
-    pass
+def attack(player):
+    while ATTACK not in player.hand:
+        print(f"{player} played a card")
+
 
 def nope():
     pass
 
 def skip():
+
     pass
 
 def shuffle():
@@ -183,11 +197,7 @@ def seethefuture():
     pass
 
 def cat_combos(player,players):
-    for cat in player.items(CATS):
-        if cat > 2:
-            choice = input(f"You have 2 {cat}. Play the pair? (yes/no)")
-            player.hand.remove(cat)
-            player.hand.remove(cat)
+    pass
             
 
 
@@ -222,10 +232,11 @@ def intro():
 
 
 def main():
+    current = 0
     intro()
     numplayer = int(input("How many players are there? (2-4) "))
     while numplayer <2 or numplayer >4:
-        numplayer = int(input("How many players are there? (2-4) "))
+        numplayer = int(input("It needs to be between 2-4 players, sorryyyy, re-enter your number of players plzz "))
     for i in range(numplayer):
         name = input(f"Player {i+1}, what do I call you? ")
         players.append(Player(name))
@@ -239,17 +250,35 @@ def main():
     for i in range(numplayer-1):
         deck.append(KITTEN)
     random.shuffle(deck)
-    while True:
-        for player in players:
-            choice = player_turn(player,deck)
-            if choice == "1":
-                draw_card(player,deck)
-                check(player)
-            elif choice == "2":
-                card_selected = use_card(player)
-                card_played(card_selected,player)
+
+
+    while sum(player.alive for player in players) > 1:
+        player = players[current]
+        if not player.alive:
+            current = current + 1
+        player = players[current]
+        
+        choice = player_turn(player)
+        if choice == "1":
+            draw_card(player,deck)
+            check(player)
+        elif choice == "2":
+            card_selected = use_card(player)
+            card_played(card_selected,player)
+        elif choice == "3":
+            player.show_hand()
+            input("Done reading? press enter to continue")
+            clear()
+            player_turn(player)
+
+        current = (current+1) % len(players)
+
 
             
+    winner = (player for player in players)
+    betterprint(f"{winner.name} is the winner!!!")
+            
+main()
         
 
     
