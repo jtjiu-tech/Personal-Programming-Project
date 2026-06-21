@@ -313,7 +313,7 @@ def main():
     intro()
     numplayer = int(input("How many players are there? (2-4) "))
     while numplayer <2 or numplayer >4:
-        numplayer = int(input("It needs to be between 2-4 players, sorryyyy, re-enter your number of players plzz "))
+        numplayer = int(input("It needs to be between 2-4 players, sorry, re-enter your number of players"))
     for i in range(numplayer):
         name = input(f"Player {i+1}, what do I call you? ")
         players.append(Player(name))
