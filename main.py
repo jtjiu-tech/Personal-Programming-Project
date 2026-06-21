@@ -390,15 +390,15 @@ Good luck and have fun!!!""")
 def main():
     current = 0
     intro()
-    numplayer = int(input("How many players are there? (2-4) "))
-    try:
-        while numplayer <2 or numplayer >4:
-            numplayer = int(input("It needs to be between 2-4 players, sorry, re-enter your number of players"))
-    except ValueError:
-            numplayer = int(input("It needs to be between 2-4 players, sorry, re-enter your number of players"))
-
+    while True:
+        try:
+            numplayer = int(input("how many players are there? (2-4)  "))
+            if 2<= numplayer <= 4:
+                break
+        except ValueError:
+            print("Invalid input! please enter a number")
     for i in range(numplayer):
-        name = input(f"Player {i+1}, what do I call you? ")
+        name = input(f"Player {i+1}, what should I call you?  ")
         players.append(Player(name))
     clear()
     
