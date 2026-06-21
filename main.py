@@ -229,7 +229,7 @@ def shuffle(deck):
     betterprint("Shuffling the deck...\n")
     random.shuffle(deck)
     sleep(1)
-    betterprint("Deck shuffled")
+    betterprint("Deck shuffled\n")
     return "shuffled"
     #should work
 
@@ -243,7 +243,6 @@ def favor(current_player,players):
 
     sleep(1)
     clear()
-    betterprint(f"{target.name}, here are your cards:")
     target.show_hand()
     card = input(f"{target.name}, which card would you give to {current_player.name}? (enter number): ")
     while True:
@@ -252,15 +251,15 @@ def favor(current_player,players):
             if 1 <= card <= len(target.hand):
                 break
             else:
-                card = input(f"invalid choice!!! Choose a number between 1 and {len(target.hand)}")
+                card = input(f"Invalid choice!!! Choose a number between 1 and {len(target.hand)}  ")
         except ValueError:
-            print(f"Invalid choice!!! Choose a number between 1 and {len(target.hand)}")
+            print(f"Invalid choice!!! Choose a number between 1 and {len(target.hand)}  ")
 
     cardindex = card -1
     stolencard = target.hand.pop(cardindex)
     current_player.hand.append(stolencard)
     clear()
-    betterprint(f"{current_player.name} has recieved {stolencard} from {target.name}!")
+    betterprint(f"{current_player.name} has recieved {stolencard} from {target.name}! \n")
     sleep(3)
     return "favor_done"
     #should work
@@ -345,7 +344,7 @@ def cat_combos(player,players):
 
 def check(player):
     if KITTEN in player.hand:
-        betterprint("OH NOOOO!!!! YOU PULLED AN EXPLODING KITTENN!! 💣💣💣")
+        betterprint("YOU PULLED AN EXPLODING KITTEN!!! 💣💣💣 \n")
         sleep(1)
         if DEFUSE in player.hand:
             reply = input("You have a defuse!! Do you wanna use it? (yes or no) ")
