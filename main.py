@@ -313,6 +313,7 @@ def cat_combos(player,players):
     if target is None:
         return "cat_failed"
     target.show_hand()
+    
 
     while True:
         try:
@@ -433,7 +434,7 @@ def main():
                         current = (current+1) % len(players)
                         continue
             elif choice == "3":
-                player.show_hand()
+                player.show_cards()
                 clear()
                 continue
 
