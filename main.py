@@ -73,14 +73,17 @@ def select_target(current_player, players):
     betterprint("Choose a target player\n")
     for i,player in enumerate(available):
         print(f"{i+1} {player.name}")
-    choice = input("Enter player number\n")
-    
+
+
     while True:
-        choice = int(choice)
-        if 1 <= choice <= len(available):
-            return available[choice - 1]
-        else:
-            choice = input(f"Enter a number between 1 and {len(available)}:  ")
+        try:
+            choice = int(input("Enter player number: ")) 
+            if 1 <= choice <= len(available):
+                return available[choice - 1]
+            else:
+                print(f"Enter a number between 1 and {len(available)}")
+        except ValueError:
+            print(f"Enter a number between 1 and {len(available)}")
 
 
 
@@ -432,9 +435,9 @@ def main():
         if player.extra_turns > 0:
             print(f"{player.name} has {player.extra_turns} extra turn(s)!\n")
             player.extra_turns -= 1
-        
-        else:
-            pass
+
+
+
         turn_ended = False
         while not turn_ended:
             choice = player_turn(player)
@@ -473,6 +476,7 @@ def main():
                 input("Done reading? Press Enter to move on...")
                 clear()
                 continue
+        current = (current + 1) % len(players)
 
 
 
