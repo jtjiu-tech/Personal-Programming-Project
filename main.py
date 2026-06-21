@@ -260,12 +260,24 @@ def check(player):
         sleep(1)
         if DEFUSE in player.hand:
             reply = input("You have a defuse!! Do you wanna use it? (yes or no) ")
-            if reply == "yes":
+            if reply.lower() == "yes":
                 player.hand.pop(DEFUSE)
-                #how would i make it so that players see the announcement where this player used defuse and pulled an exploding kitten?
-                #player given choice to place exploding kitten somewhere
-                #deal with later
-    pass
+                player.hand.pop(KITTEN)
+                betterprint("DEFUSE is used! You survived!")
+                return True
+            else:
+                player.hand.pop(KITTEN)
+                player.alive = False
+                betterprint(f"{player.name} has exploded 💥 , They're out of the game!!")
+                sleep(1)
+                return False
+        else:
+            player.hand.pop(KITTEN)
+            player.alive = False
+            betterprint(f"{player.name} has exploded 💥 , They're out of the game!!")
+            sleep(1)
+            return False
+    return True
 
 
 def intro():
@@ -273,7 +285,7 @@ def intro():
     betterprint("-Welcome to EXPLODDDINGGG KITTTEEENNNSSSS 💣💣💣-\n")
     betterprint("Do you know how to play?? (yes or no) ")
     play = input("")
-    if play == "yes":
+    if play.lower() == "yes":
         pass
     else:
         print("In this game, the goal is to be the last player standing. Every player has a total of 8 cards including a defuse at the beginning of the game. Once it is your turn, you have the ability to use one of your cards which have ability like: See the Future where you see the next 3 cards in the deck or you can directly draw a card from the pile. Unless you place a card that directly skips your turn, you have to draw a card from the deck. If you draw the exploding kitten, you will need to use a diffuse to survive, if you do not have one, then too bad… you're dead. Good luck and have fun!!!")
@@ -325,7 +337,6 @@ def main():
         current = (current+1) % len(players)
 
 
-            
     winner = (player for player in players)
     betterprint(f"{winner.name} is the winner!!!")
             
