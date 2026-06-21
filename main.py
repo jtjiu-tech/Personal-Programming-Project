@@ -297,6 +297,24 @@ def cat_combos(player,players):
 
     player.hand.remove(chosen_cat)
     player.hand.remove(chosen_cat)
+
+    target = select_target(player,players)
+    if target is None:
+        return "cat_failed"
+    target.show_hand()
+
+    while True:
+        try:
+            card = int(input(f"{target.name}, which card will you give to {player.name}? (enter number): "))
+            if 1 <= card <= len(target.hand):
+                break
+            print(f"Enter a number between 1 and {len(target.hand)}")
+        except ValueError:
+            print(f"Enter a number between 1 and {len(target.hand)}")
+    stolencard = target.hand.pop(card-1)
+    player.hand.append(stolencard)
+    betterprint(f"{player.name} stole {stolencard} from {target.name}!\n")
+    return "cat_done"
     
 
 
