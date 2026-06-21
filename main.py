@@ -213,6 +213,7 @@ def shuffle(deck):
     betterprint("Deck shuffled")
     return "shuffled"
     #should work
+    
 
 def favor(current_player,players):
     target = select_target(current_player,players)
@@ -290,7 +291,18 @@ def cat_combos(player,players):
         print(f"{i}: {cat} (x{count})")
     
     while True:
-        pass
+        try:
+            choice = int(input("Choose a cat card to pair(enter number)"))
+            if 1 <= choice <= len(cats):
+                break
+            print(f"Enter a number between 1 and {len(cats)}")
+        except ValueError:
+            print(f"Enter a number between 1 and {len(cats)}")
+        
+    chosen_cat = cats[choice - 1]
+
+    player.hand.remove(chosen_cat)
+    player.hand.remove(chosen_cat)
     
 
 
