@@ -291,18 +291,18 @@ def intro():
         print("In this game, the goal is to be the last player standing.\n")
         print("Each player starts with 8 cards including a defuse. \n")
         print("""On your turn you can:
-                 - Draw a card (risky!)
-                 - Play a card with special effects:
-                 • ATTACK: Next player takes 2 turns
-                 • SKIP: End your turn without drawing
-                 • FAVOR: Steal a card from another player
-                 • SHUFFLE: Randomize the deck
-                 • SEE THE FUTURE: Look at top 3 cards
-                 • CAT CARDS: Combine to steal from others
-                 • NOPE: Cancel the previous action
+- Draw a card (risky!)
+- Play a card with special effects:
+• ATTACK: Next player takes 2 turns
+• SKIP: End your turn without drawing
+• FAVOR: Steal a card from another player
+• SHUFFLE: Randomize the deck
+• SEE THE FUTURE: Look at top 3 cards
+• CAT CARDS: Combine to steal from others
+• NOPE: Cancel the previous action
 
-                 If you draw the EXPLODING KITTEN, you need a defuse to survive!
-                 Good luck and have fun!!!""")
+If you draw the EXPLODING KITTEN, you need a defuse to survive!
+Good luck and have fun!!!""")
         sleep(5)
         input("Done reading? Press Enter to move on...")
         clear()
