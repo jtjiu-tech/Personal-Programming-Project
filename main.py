@@ -213,7 +213,7 @@ def shuffle(deck):
     betterprint("Deck shuffled")
     return "shuffled"
     #should work
-    
+
 
 def favor(current_player,players):
     target = select_target(current_player,players)
@@ -396,7 +396,7 @@ def main():
             check(player)
         elif choice == "2":
             card_selected = use_card(player)
-            card_played(card_selected,player)
+            card_played(players,deck)
         elif choice == "3":
             player.show_hand()
             input("Done reading? press enter to continue")
