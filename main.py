@@ -73,7 +73,7 @@ def select_target(current_player, players):
     betterprint("Choose a target player\n")
     for i,player in enumerate(available):
         print(f"{i+1} {player.name}")
-    choice = input("Enter player name\n")
+    choice = input("Enter player number\n")
     
     while True:
         choice = int(choice)
@@ -239,7 +239,7 @@ def favor(current_player,players):
     betterprint(f"{current_player.name} is asking for a card from {target.name}!")
 
     sleep(1)
-
+    clear()
     betterprint(f"{target.name}, here are your cards:")
     target.show_hand()
     card = input(f"{target.name}, which card would you give to {current_player.name}? (enter number): ")
@@ -256,7 +256,9 @@ def favor(current_player,players):
     cardindex = card -1
     stolencard = target.hand.pop(cardindex)
     current_player.hand.append(stolencard)
+    clear()
     betterprint(f"{current_player.name} has recieved {stolencard} from {target.name}!")
+    sleep(3)
     return "favor_done"
     #should work
 
@@ -442,10 +444,12 @@ def main():
                     result = card_played(card_selected,player,players,deck)
                     if result == "skipped":
                         betterprint(f"{player.name}'s turn is over!\n")
+                        sleep(2)
                         turn_ended = True
                         break
                     elif result == "attack":
                         betterprint(f"{player.name}'s turn is over!\n")
+                        sleep(2)
                         turn_ended = True
                         break
                     else:
