@@ -288,7 +288,21 @@ def intro():
     if play.lower() == "yes":
         pass
     else:
-        print("In this game, the goal is to be the last player standing. Every player has a total of 8 cards including a defuse at the beginning of the game. Once it is your turn, you have the ability to use one of your cards which have ability like: See the Future where you see the next 3 cards in the deck or you can directly draw a card from the pile. Unless you place a card that directly skips your turn, you have to draw a card from the deck. If you draw the exploding kitten, you will need to use a diffuse to survive, if you do not have one, then too bad… you're dead. Good luck and have fun!!!")
+        print("In this game, the goal is to be the last player standing.\n")
+        print("Each player starts with 8 cards including a defuse. \n")
+        print("""On your turn you can:
+                 - Draw a card (risky!)
+                 - Play a card with special effects:
+                 • ATTACK: Next player takes 2 turns
+                 • SKIP: End your turn without drawing
+                 • FAVOR: Steal a card from another player
+                 • SHUFFLE: Randomize the deck
+                 • SEE THE FUTURE: Look at top 3 cards
+                 • CAT CARDS: Combine to steal from others
+                 • NOPE: Cancel the previous action
+
+                 If you draw the EXPLODING KITTEN, you need a defuse to survive!
+                 Good luck and have fun!!!""")
         sleep(5)
         input("Done reading? Press Enter to move on...")
         clear()
