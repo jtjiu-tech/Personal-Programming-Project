@@ -1,6 +1,6 @@
 ## Personal Programming Project John Tjiu
 import time
-from colorist import rgb
+from colorist import rgb, ColorRGB
 import random
 from time import sleep
 import os
@@ -13,49 +13,134 @@ def betterprint(text):
         sleep(0.02)
 
 def setupMusic():
-    pygame.mixer.init
+    pygame.mixer.init()
 
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
 
 #Colours
-def gold(string):
-    rgb(string, 255, 204, 0)
-    return string
+def color_text(text, r, g, b):
+    return f"{ColorRGB(r, g, b)}{text}{ColorRGB(255, 255, 255)}"
 
-def red(string):
-    rgb(string, 255, 0, 0)
-    return string
+def gold(text):
+    return color_text(text, 255, 204, 0)
+
+def red(text):
+    return color_text(text, 255, 0, 0)
+
+def green(text):
+    return color_text(text, 0, 255, 0)
+
+def cyan(text):
+    return color_text(text, 0, 255, 255)
+
+def magenta(text):
+    return color_text(text, 255, 0, 255)
+
+def blue(text):
+    return color_text(text, 0, 150, 255)
+
+def orange(text):
+    return color_text(text, 255, 165, 0)
+
+def pink(text):
+    return color_text(text, 255, 105, 180)
+
+def bright(text):
+    return color_text(text, 255, 255, 100)
+
+def dim(text):
+    return color_text(text, 150, 150, 150)
+
+
+def announce_look_away():
+    print("\n" + "="*50)
+    print("🔒 OTHER PLAYERS: PLEASE LOOK AWAY NOW! 🔒")
+    print("="*50)
+    for i in range(3, 0, -1):
+        print(f"👀 Looking away in {i}...")
+        sleep(1)
+    clear()
+
+def announce_players_can_look():
+    clear()
+    print("\n" + "="*50)
+    print("👁️ OTHER PLAYERS: YOU CAN LOOK BACK NOW! 👁️")
+    print("="*50)
+    sleep(3)
+    clear()
+
+def announce_private_action(current_player, action_name):
+    clear()
+    print("\n" + "🔒"*25)
+    print(f"🔒 {current_player.name} is using {action_name} - PRIVATE ACTION 🔒")
+    print("🔒"*25)
+    announce_look_away()
+
+def announce_public_action(player, action_name):
+    """Announce a public action that everyone can see"""
+    clear()
+    print("\n" + "⭐"*30)
+    print(f"⭐ {player.name} played {action_name}! ⭐")
+    print("⭐"*30)
+    sleep(1)
+
+
 
 
 # Definitions
 players = []
 
+
 #Capitalised all cat cards + definitions of cards
-DEFUSE = "🛡️ •⩊•(defuse)"
-NOPE = "🚫 (nope)"
-ATTACK = "⚔️ (attack)"
-SHUFFLE = "🔀 (shuffle)"
-SKIP = "🏃 (skip)"
-FAVOR = "🖤 (favor)"
-SEE = "👀 (See the future)"
+DEFUSE = "🛡️•⩊•(defuse)"
+NOPE = "🚫(nope)"
+ATTACK = "⚔️(attack)"
+SHUFFLE = "🔀(shuffle)"
+SKIP = "🏃(skip)"
+FAVOR = "🖤(favor)"
+SEE = "👀(See the future)"
 KITTEN = "💣"
 
 CATS = ["🍉🐱", "🥔🐱", "🌈🐱"]
 
-
+#Way of defining players
 class Player:
-    def __init__(self, name):
+    def __init__(self,name):
         self.name = name
         self.hand = []
         self.alive = True
+        self.extra_turns = 0
+        self.has_played_attack = False
+        self.has_played_skip = False
 
     def show_hand(self):
         i = 0
         print(f"{self.name}, Here are your cards: ")
-        for item in self.hand:
-            i +=1
+        for i,item in enumerate(self.hand,1):
             print(f"{i}. {item}")
+
+def select_target(current_player, players):
+    available = [p for p in players if p.alive and p != current_player]
+    # checks if the list is empty
+    if not available:
+        betterprint("No other players available!")
+        return None
+    betterprint("Choose a target player\n")
+    for i,player in enumerate(available):
+        print(f"{i+1} {player.name}")
+
+
+    while True:
+        try:
+            choice = int(input("Enter player number: ")) 
+            if 1 <= choice <= len(available):
+                return available[choice - 1]
+            else:
+                print(f"Enter a number between 1 and {len(available)}")
+        except ValueError:
+            print(f"Enter a number between 1 and {len(available)}")
+
 
 
 def create_deck():
@@ -63,189 +148,507 @@ def create_deck():
     random.shuffle(deck)
     return deck
 
+def show_cards():
+    for player in players:
+        player.show_hand()
+        print("")
+        input("Press enter when done... ")
+        clear()
 
-def deal_card(players, deck):
+def deal_card(players,deck):
     for player in players:
         player.hand.append(DEFUSE)
         while len(player.hand) < 8:
             card = deck.pop()
             player.hand.append(card)
+        
 
-
-def options(player, deck):
-    allow_skip = False
-    not_end_turn = True
-
-    while not_end_turn:
-
-        for i, card in enumerate(player.hand):
-            print(f"{i + 1}. {card}")
-
-        print()
-
-        print("What would you like to do?")
-        print("1. Draw a card")
-        print("2. Play a card")
-        print("3. End turn")
-
-        choice = input("Enter the number of your choice: ")
-
-        if choice == "1":
-            allow_skip = True
-            draw_card(player, deck)
-
-        elif choice == "2":
-            allow_skip = True
-            not_end_turn = play_card(player, deck)
-
-        elif choice == "3":
-            if allow_skip:
-                print("You chose to end your turn\n")
-                not_end_turn = False
-            else:
-                print("You cannot end your turn without drawing or playing a card.\n")
-                options(player, deck)
-
-
-def draw_card(player, deck):
-    card = deck.pop()
-    player.hand.append(card)
-    print(f"You drew a {card} card!")
-    if card == KITTEN:
-        if DEFUSE in player.hand:
-            print("You drew an exploding kitten but the defuse card saved you! The exploding kittens card is put back into the deck")
-            player.hand.remove(DEFUSE)
-            deck.insert(random.randint(0, len(deck)), KITTEN)
-        else:
-            print("You drew an exploding kitten and you have no defuse cards! You lose!")
-            player.alive = False
-    print()
-
-
-def play_card(player, deck):
-    print("Which card would you like to play?")
-
-    choice = int(input("Enter the number of the card you want to play: ")) - 1
-    card = player.hand.pop(choice)
-
-    print(f"You played a {card} card!")
-
-    if card == SEE:
-        see_the_future(deck)
-        return True
-    
-    elif card == SHUFFLE:
-        random.shuffle(deck)
-        print("The deck has been shuffled!")
-        return True
-    
-    elif card == FAVOR:
-        favor(player, players)
-        return True
-    
-    elif card == SKIP:
-        print("You skipped your turn!")
-        return False
-    
-    elif card == ATTACK:
-        attack(player, players, deck)
-        return True
-    
-    elif card == DEFUSE:
-        print("You cannot play a defuse card!")
-        player.hand.append(DEFUSE)
-        return True
-    
-    elif card == NOPE:
-        print("You cannot play a nope card!")
-        player.hand.append(NOPE)
-        return True
-
-def attack(player, players, deck):
-    print(f"{player.name} played an attack card!")
-    next_player = players[(players.index(player) + 1) % len(players)]
-    print(f"{next_player.name}, you must draw two cards")
-    if NOPE in next_player.hand:
-        skip = input(f"{next_player.name}, you have a nope card! Do you want to play it? (y/n): ")
-        if skip.lower() == "y":
-            print("The attack was cancelled")
-        else:
-            draw_card(next_player, deck)
-            draw_card(next_player, deck)
-
-def see_the_future(deck):
-    print("You see the future! Here are the next three cards in the deck:")
+def getting_card():
+    print("Wait")
+    select = "Getting card..."
     for i in range(3):
-        print(deck[-(i + 1)])
+        sleep(0.5)
+        print(".", end="", flush=True)
     print()
+    sleep(0.5)
+    clear()
 
 
-def favor(player, players):
-    print("You played a favor card! Choose a player to ask for a card.")
-    choice = int(input("Enter the number of the player you want to ask: ")) - 1
-    chosen_player = players[choice]
 
-    for i, card in enumerate(chosen_player.hand):
-        print(f"{i + 1}. {card}")
+def player_turn(player):
+    clear()
+    while True:
+        if player.extra_turns > 0:
+            betterprint(f" {player.name} has {player.extra_turns} extra turn(s) remaining!\n")
+            print("🔴" * player.extra_turns + " TURNS REMAINING\n")
 
-    if NOPE in chosen_player.hand:
-        skip = input(f"{chosen_player.name}, you have a nope card! Do you want to play it? (y/n): ")
-        if skip.lower() == "y":
-            print("The favor was cancelled")
+    
+        betterprint(f"{player.name}, what would you like to do?\n")
+        print("1) Play a card")
+        print("2) End your turn and draw a card")
+        print("3) Display your cards")
+        choice = input("")
+        if choice in ["1","2","3"]:
+            return choice
+        else:
+            print("Not an option\n")
 
-    else:
-        choice = int(input("Enter the number of the card you want to play: ")) - 1
-        card = chosen_player.hand.pop(choice)
-        player.hand.append(card)
-        print(f"You received a {card} card from {chosen_player.name}!")
 
 
-# def attack(player, players):
-#     print(f"{player.name} played an attack card!")
-#     next_player = players[(players.index(player) + 1) % len(players)]
-#     print(f"{next_player.name}, you must take two turns in a row!")
+
+
+
+def draw_card(player,deck):
+    announce_private_action(player, "DRAWING A CARD")
+    card = deck.pop(0)
+    player.hand.append(card)
+    getting_card()
+    betterprint(f"You drew a {card}!!!\n")
+    sleep(2)
+    player.show_hand()
+    input("Done reading? Press Enter to move on...")
+    announce_players_can_look()
+    clear()
+    return check(player)
+
+
+def use_card(player):
+    clear()
+    betterprint("Which card would you like to use? (enter a number)\n")
+    player.show_hand()
+    while True:
+        try:
+            playerinput = int(input())
+            if 1 <= playerinput <= len(player.hand):
+                break
+            betterprint(f"Enter a number between 1 and {len(player.hand)}")
+        except ValueError:
+            betterprint(f"Enter a number between 1 and {len(player.hand)}")
+    card_selected = player.hand[playerinput - 1]
+    player.hand.pop(playerinput - 1)
+    return card_selected
+
+last_action = None
+last_action_player = None
+last_action_target = None
+favor_cancelled = False
+
+
+def card_played(card_selected,player,players,deck):
+    global last_action, last_action_player, last_action_target
+    
+    if card_selected == DEFUSE:
+        betterprint("You can't use a defuse, you didn't pull an exploding kitten...")
+        sleep(1)
+        clear()
+        return None
+    elif card_selected in CATS:
+        return cat_combos(player,players)
+    elif card_selected == ATTACK:
+        last_action = "attack"
+        last_action_player = player
+        last_action_target = None
+        announce_public_action(player, "ATTACK")
+        player.has_played_attack = True
+        return attack(player,players)
+    elif card_selected == NOPE:
+        announce_public_action(player, "NOPE")
+        return nope()
+    elif card_selected == SKIP:
+        announce_public_action(player, "SKIP")
+        player.has_played_skip = True
+        return skip(player)
+    elif card_selected == SHUFFLE:
+        announce_public_action(player, "SHUFFLE")
+        return shuffle(deck)
+    elif card_selected == FAVOR:
+        last_action = "favor"
+        last_action_player = player
+        last_action_target = None
+        announce_private_action(player, "FAVOR")
+        if favor_cancelled:
+            favor_cancelled = False
+            betterprint("The favor was cancelled! No cards were stolen.\n")
+            return "favor_cancelled"
+        return favor(player,players)
+    elif card_selected == SEE:
+        announce_private_action(player, "SEE THE FUTURE")
+        return seethefuture(deck)
+    return None
+
+
+def attack(player,players):
+    betterprint(f"{player.name} played ATTACK! Next player takes 2 turns\n")
+    sleep(1)
+    current_index = players.index(player)
+    #loops through every player starting with the next player
+    for i in range(1,len(players)):
+        #calculates index of next player (wraps around)
+        next_player = players[(current_index + i) % len(players)]
+        if next_player.alive:
+            next_player.extra_turns += 2
+            betterprint(f" {next_player.name} now has {next_player.extra_turns} total turns to take! \n")
+            break
+
+    return "attack"
+    #handle in main loop
+
+def nope():
+    global last_action, last_action_player, last_action_target,players, favor_cancelled
+    if last_action is None:
+        betterprint("There's no action to NOPE!\n")
+        sleep(1)
+        return "nope_failed"
+    
+    betterprint(f"NOPE! The {last_action} by {last_action_player.name} is cancelled!\n")
+    sleep(1)
+    
+    if last_action == "attack":
+        current_index = players.index(last_action_player)
+        for i in range(1, len(players)):
+            next_player = players[(current_index + i) % len(players)]
+            if next_player.alive:
+                if next_player.extra_turns >= 2:
+                    next_player.extra_turns -= 2
+                else:
+                    next_player.extra_turns = 0
+                betterprint(f"Removed 2 extra turns from {next_player.name}\n")
+                break
+    
+    elif last_action == "favor":
+        favor_cancelled = True
+        betterprint("The favor was cancelled! No cards were stolen.\n")
+    
+    last_action = None
+    last_action_player = None
+    last_action_target = None
+    favor_cancelled = False
+    
+    return "nope_success"
+
+def skip(player):
+    betterprint(f"{player.name} used SKIP! Their turn is skipped\n")
+    sleep(1)
+    return "skipped"
+    #handle in main loop
+
+def shuffle(deck):
+    betterprint("Shuffling the deck...\n")
+    random.shuffle(deck)
+    sleep(1)
+    betterprint("Deck shuffled\n")
+    return "shuffled"
+    #should work
+
+
+def favor(current_player,players):
+    global last_action, last_action_target,favor_cancelled
+    
+    if favor_cancelled:
+        favor_cancelled = False
+        betterprint("The favor was cancelled! No cards were stolen.\n")
+        return "favor_cancelled"
+
+    target = select_target(current_player,players)
+    if target is None:
+        return "favor_failed"
+
+    last_action_target = target
+    betterprint(f"{current_player.name} is asking for a card from {target.name}!")
+
+    sleep(1)
+    clear()
+    print(f" {target.name}'s hand (only {target.name} should see this):")
+    target.show_hand()
+
+    while True:
+        try:
+            card = input(f"{target.name}, which card would you give to {current_player.name}? (enter number): ")
+            card_index = int(card)
+            if 1 <= card_index <= len(target.hand):
+                break
+            else:
+                print(f"Invalid choice!!! Choose a number between 1 and {len(target.hand)}  ")
+        except ValueError:
+            print(f"Invalid choice!!! Choose a number between 1 and {len(target.hand)}  ")
+
+    cardindex = card_index -1
+    stolencard = target.hand.pop(cardindex)
+    current_player.hand.append(stolencard)
+    clear()
+    betterprint(f"{current_player.name} has recieved {stolencard} from {target.name}! \n")
+    sleep(3)
+    announce_players_can_look()
+
+    #check if favor was noped
+    if favor_cancelled:
+
+        current_player.hand.remove(stolencard)
+        target.hand.append(stolencard)
+        betterprint("The favor was cancelled! Card returned.\n")
+        favor_cancelled = False
+        return "favor_cancelled"
+    
+    return "favor_done"
+    #should work
+
+
+def seethefuture(deck):
+    betterprint("You see the future! Here are the next three cards in the deck:\n")
+    top_cards = deck[:3]
+    for i,card in enumerate(top_cards,1):
+        print(f"{i}: {card}")
+    sleep(2)
+    input("Press enter to continue...")
+    clear()
+    announce_players_can_look()
+    return "Seen_the_future"
+    #should work
+
+def cat_combos(player, players):
+    cat_cards_in_hand = [card for card in player.hand if card in CATS]
+    
+    if len(cat_cards_in_hand) < 2:
+        betterprint("You don't have enough cat cards to make a combo! You need at least 2 cat cards.")
+        return "cat_failed"
+
+    cats = []
+    for cat in CATS:
+        if cat_cards_in_hand.count(cat) >= 2:
+            cats.append(cat)
+    
+    if not cats:
+        betterprint("You don't have two of the same cat cards to make a combo!!!")
+        betterprint("You have:\n")
+        for cat in CATS:
+            count = cat_cards_in_hand.count(cat)
+            if count > 0:
+                print(f"- {cat}: {count}")
+        sleep(2)
+        return "cat_failed"
+
+    betterprint("You have these cats with 2 or more copies:\n")
+    for i, cat in enumerate(cats, 1):
+        count = cat_cards_in_hand.count(cat)
+        print(f"{i}: {cat} (x{count})")
+    
+    while True:
+        try:
+            choice = int(input("Choose a cat card to pair (enter number): "))
+            if 1 <= choice <= len(cats):
+                break
+            print(f"Enter a number between 1 and {len(cats)}")
+        except ValueError:
+            print(f"Enter a number between 1 and {len(cats)}")
+        
+    chosen_cat = cats[choice - 1]
+    player.hand.remove(chosen_cat)
+    player.hand.remove(chosen_cat)
+
+    target = select_target(player, players)
+    if target is None:
+        return "cat_failed"
+    
+    announce_private_action(player, "CAT COMBO")
+    print(f"📋 {target.name}'s hand (only {player.name} should see this):")
+    target.show_hand()
+    
+    while True:
+        try:
+            card_input = input(f"{target.name}, which card will you give to {player.name}? (enter number): ")
+            card_index = int(card_input)
+            if 1 <= card_index <= len(target.hand):
+                break
+            print(f"Enter a number between 1 and {len(target.hand)}")
+        except ValueError:
+            print(f"Enter a number between 1 and {len(target.hand)}")
+    
+    stolen_card = target.hand.pop(card_index - 1)
+    player.hand.append(stolen_card)
+    betterprint(f"{player.name} stole {stolen_card} from {target.name}!\n")
+    announce_players_can_look()
+    return "cat_done"
+    
+
+
+    
+
+
+def check(player):
+    if KITTEN in player.hand:
+        betterprint("YOU PULLED AN EXPLODING KITTEN!!! 💣💣💣 \n")
+        sleep(1)
+        if DEFUSE in player.hand:
+            reply = input("You have a defuse!! Do you wanna use it? (yes or no) ")
+            if reply.lower() == "yes":
+                player.hand.remove(DEFUSE)
+                player.hand.remove(KITTEN)
+                betterprint("DEFUSE is used! You survived!")
+                return True
+            else:
+                player.hand.remove(KITTEN)
+                player.alive = False
+                betterprint(f"{player.name} has exploded 💥 , They're out of the game!!")
+                sleep(1)
+                return False
+        else:
+            player.hand.remove(KITTEN)
+            player.alive = False
+            betterprint(f"{player.name} has exploded 💥 , They're out of the game!!")
+            sleep(1)
+            return False
+    return True
 
 
 def intro():
-    print("Welcome to Exploding Kittens!")
-    num_players = int(input("How many players are there? "))
-    for i in range(num_players):
-        name = input(f"Player {i+1}, please enter your name: ")
-        players.append(Player(name))
-    
-    # for player in players:
-    #     print(player.name, player.hand, player.alive)
-    
-    print("Great! Let's start the game!")
-    return players
+    clear()
+    betterprint("-Welcome to EXPLODDDINGGG KITTTEEENNNSSSS 💣💣💣-\n")
+    betterprint("Do you know how to play?? (yes or no) ")
+    play = input("")
+    if play.lower() == "yes":
+        pass
+    else:
+        print("In this game, the goal is to be the last player standing.\n")
+        print("Each player starts with 8 cards including a defuse. \n")
+        print("""On your turn you can:
+- Draw a card (risky!)
+- Play a card with special effects:
+• ATTACK: Next player takes 2 turns
+• SKIP: End your turn without drawing
+• FAVOR: Steal a card from another player
+• SHUFFLE: Randomize the deck
+• SEE THE FUTURE: Look at top 3 cards
+• CAT CARDS: Combine to steal from others
+• NOPE: Cancel the previous action
+
+If you draw the EXPLODING KITTEN, you need a defuse to survive!
+Good luck and have fun!!!""")
+        sleep(5)
+        input("Done reading? Press Enter to move on...")
+        clear()
 
 
 def main():
-    turn = 0
-
-    players = intro()
+    current = 0
+    intro()
+    while True:
+        try:
+            numplayer = int(input("How many players are there? (2-4)  "))
+            if 2<= numplayer <= 4:
+                break
+        except ValueError:
+            print("Invalid input! please enter a number")
+    for i in range(numplayer):
+        name = input(f"Player {i+1}, what should I call you?  ")
+        players.append(Player(name))
+    clear()
+    
     deck = create_deck()
-    deal_card(players, deck)
+    deal_card(players,deck)
+    show_cards()
 
-    while len(players) >= 1:  
-        turn += 1
-        if turn > len(players):
-            turn = 1
+    #add exploding kittens to deck after players recieved cards 
+    for i in range(numplayer-1):
+        deck.append(KITTEN)
+    random.shuffle(deck)
 
-        for player in players:
-            if not player.alive:
+
+    while sum(player.alive for player in players) > 1:
+        player = players[current]
+
+        if not player.alive:
+            current = (current + 1) % len(players)
+            continue
+            
+        player.has_played_attack = False
+        player.has_played_skip = False
+
+        if player.extra_turns > 0:
+            betterprint(f"🔴🔴🔴 {player.name} has {player.extra_turns} turn(s) remaining! 🔴🔴🔴\n")
+            sleep(1)
+
+
+        turn_ended = False
+
+        while not turn_ended:
+            choice = player_turn(player)
+            if choice == "1":
+                card_selected = use_card(player)
+                if card_selected:
+                    result = card_played(card_selected,player,players,deck)
+                    if result == "skipped":
+                        betterprint(f"{player.name}'s turn is over!\n")
+                        sleep(2)
+                        turn_ended = True
+                        break
+                    elif result == "attack":
+                        betterprint(f"{player.name}'s turn is over!\n")
+                        sleep(2)
+                        turn_ended = True
+                        attack_played = True
+                        break
+                    elif result == "nope_success":
+                        betterprint("The action was cancelled by NOPE!\n")
+                        sleep(1)
+                        break
+
+                    elif result =="nope_failed":
+                        continue
+
+                    elif result == "favor_cancelled":
+                        betterprint("The favor was cancelled!\n")
+                        sleep(1)
+                        continue
+
+                    else:
+                        betterprint("You can play another card or end your turn!\n")
+                        sleep(1)
+                        continue
+                else:
+                    continue
+        
+            elif choice == "2":
+                betterprint(f"{player.name} ends their turn and draws a card!\n")
+                if draw_card(player,deck) == False:
+                    turn_ended = True
+                    break
+                else:
+                    turn_ended = True
+                    break
+
+            elif choice == "3":
+                player.show_hand()
+                input("Done reading? Press Enter to move on...")
+                clear()
                 continue
 
-        player = players[turn - 1]
+        if player.extra_turns > 0:
+            player.extra_turns -= 1
+            if player.extra_turns > 0:
 
-        print(f"\n{player.name}'s turn!")
-        # player.show_hand()
+                betterprint(f"🔄 {player.name} has {player.extra_turns} turn(s) remaining!\n")
+                sleep(1)
+                continue
+            else:
 
-        options(player, deck)
+                current = (current + 1) % len(players)
+                while not players[current].alive:
+                    current = (current + 1) % len(players)
+        else:
+            current = (current + 1) % len(players)
+            while not players[current].alive:
+                current = (current + 1) % len(players)
+        last_action = None
+        last_action_player = None
+        last_action_target = None
 
     for player in players:
         if player.alive:
-            print(f"{player.name} wins!")
+            betterprint(f"\n🏆 {player.name} is the winner!!! 🏆\n")
             break
-
 main()
+        
+
+    
+
+
