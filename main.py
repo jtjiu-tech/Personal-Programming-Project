@@ -38,10 +38,11 @@ def announce_look_away():
     clear()
 
 def announce_players_can_look():
+    clear()
     print("\n" + "="*50)
     print("👁️ OTHER PLAYERS: YOU CAN LOOK BACK NOW! 👁️")
     print("="*50)
-    sleep(1)
+    sleep(3)
     clear()
 
 def announce_private_action(current_player, action_name):
@@ -208,7 +209,9 @@ def use_card(player):
     player.hand.pop(playerinput - 1)
     return card_selected
 
-
+last_action = None
+last_action_player = None
+last_action_target = None
 
 
 def card_played(card_selected,player,players,deck):
@@ -220,6 +223,9 @@ def card_played(card_selected,player,players,deck):
     elif card_selected in CATS:
         return cat_combos(player,players)
     elif card_selected == ATTACK:
+        last_action = "attack"
+        last_action_player = player
+        last_action_target = None
         announce_public_action(player, "ATTACK")
         player.has_played_attack = True
         return attack(player,players)
@@ -234,6 +240,9 @@ def card_played(card_selected,player,players,deck):
         announce_public_action(player, "SHUFFLE")
         return shuffle(deck)
     elif card_selected == FAVOR:
+        last_action = "favor"
+        last_action_player = player
+        last_action_target = None
         announce_private_action(player, "FAVOR")
         return favor(player,players)
     elif card_selected == SEE:
@@ -259,9 +268,36 @@ def attack(player,players):
     #handle in main loop
 
 def nope():
-    betterprint("NOPE! The previous action is cancelled\n")
-    return "nope"
-    #handle in main loop
+    global last_action, last_action_player, last_action_target
+    if last_action is None:
+        betterprint("There's no action to NOPE!\n")
+        sleep(1)
+        return "nope_failed"
+    
+    betterprint(f"NOPE! The {last_action} by {last_action_player.name} is cancelled!\n")
+    sleep(1)
+    
+    if last_action == "attack":
+        current_index = players.index(last_action_player)
+        for i in range(1, len(players)):
+            next_player = players[(current_index + i) % len(players)]
+            if next_player.alive:
+                next_player.extra_turns -= 2
+                if next_player.extra_turns < 0:
+                    next_player.extra_turns = 0
+                betterprint(f"Removed 2 extra turns from {next_player.name}\n")
+                break
+    
+    elif last_action == "favor":
+        betterprint("The favor was cancelled! No cards were stolen.\n")
+        last_action = None
+        return "nope_cancelled_favor"
+    
+    last_action = None
+    last_action_player = None
+    last_action_target = None
+    
+    return "nope_success"
 
 def skip(player):
     betterprint(f"{player.name} used SKIP! Their turn is skipped\n")
@@ -279,10 +315,14 @@ def shuffle(deck):
 
 
 def favor(current_player,players):
+    global last_action, last_action_target
+
     target = select_target(current_player,players)
+
     if target is None:
         return "favor_failed"
 
+    last_action_target = target
     betterprint(f"{current_player.name} is asking for a card from {target.name}!")
 
     sleep(1)
@@ -307,6 +347,16 @@ def favor(current_player,players):
     betterprint(f"{current_player.name} has recieved {stolencard} from {target.name}! \n")
     sleep(3)
     announce_players_can_look()
+
+    #check if favor was noped
+    if last_action == "nope_cancelled_favor":
+        # Undo the transfer
+        current_player.hand.remove(stolencard)
+        target.hand.append(stolencard)
+        betterprint("The favor was cancelled! Card returned.\n")
+        last_action = None
+        return "favor_cancelled"
+    
     return "favor_done"
     #should work
 
@@ -483,7 +533,7 @@ def main():
         player.has_played_skip = False
 
         if player.extra_turns > 0:
-            players.extra_turns -= 1
+            player.extra_turns -= 1
             betterprint(f"🔴🔴🔴 {player.name} has {player.extra_turns} turn(s) remaining! 🔴🔴🔴\n")
             sleep(1)
 
@@ -508,6 +558,19 @@ def main():
                         turn_ended = True
                         attack_played = True
                         break
+                    elif result == "nope_success":
+                        betterprint("The action was cancelled by NOPE!\n")
+                        sleep(1)
+                        break
+
+                    elif result =="nope_failed":
+                        continue
+
+                    elif result == "favor_cancelled":
+                        betterprint("The favor was cancelled!\n")
+                        sleep(1)
+                        continue
+
                     else:
                         betterprint("You can play another card or end your turn!\n")
                         sleep(1)
@@ -531,15 +594,18 @@ def main():
                 continue
 
         if player.extra_turns > 0:
-            # Same player gets another turn
+
             betterprint(f"🔄 {player.name} has {player.extra_turns} turn(s) remaining!\n")
             sleep(1)
             continue
         else:
-            # No more turns, move to next player
+
             current = (current + 1) % len(players)
             while not players[current].alive:
                 current = (current + 1) % len(players)
+        last_action = None
+        last_action_player = None
+        last_action_target = None
 
 main()
         
