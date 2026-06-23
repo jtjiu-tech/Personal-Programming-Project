@@ -607,6 +607,10 @@ def main():
         last_action_player = None
         last_action_target = None
 
+    for player in players:
+        if player.alive:
+            betterprint(f"\n🏆 {player.name} is the winner!!! 🏆\n")
+            break
 main()
         
 
