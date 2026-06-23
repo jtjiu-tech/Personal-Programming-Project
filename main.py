@@ -438,6 +438,8 @@ def main():
 
 
         turn_ended = False
+        attack_played = False
+
         while not turn_ended:
             choice = player_turn(player)
             if choice == "1":
@@ -453,6 +455,7 @@ def main():
                         betterprint(f"{player.name}'s turn is over!\n")
                         sleep(2)
                         turn_ended = True
+                        attack_played = True
                         break
                     else:
                         betterprint("You can play another card or end your turn!\n")
@@ -475,7 +478,13 @@ def main():
                 input("Done reading? Press Enter to move on...")
                 clear()
                 continue
-        current = (current + 1) % len(players)
+        if not attack_played:
+            current = (current + 1) % len(players)
+        else:
+            current = (current + 1) % len(players)
+            while not players[current].alive:
+                current = (current + 1) % len(players)
+    
 
 
 
