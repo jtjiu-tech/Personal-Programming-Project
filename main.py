@@ -128,6 +128,11 @@ def getting_card():
 def player_turn(player):
     clear()
     while True:
+        if player.extra_turns > 0:
+            betterprint(f" {player.name} has {player.extra_turns} extra turn(s) remaining!\n")
+            print("🔴" * player.extra_turns + " TURNS REMAINING\n")
+
+    
         betterprint(f"{player.name}, what would you like to do?\n")
         print("1) Play a card")
         print("2) End your turn and draw a card")
@@ -209,6 +214,7 @@ def attack(player,players):
         next_player = players[(current_index + i) % len(players)]
         if next_player.alive:
             next_player.extra_turns += 2
+            betterprint(f" {next_player.name} now has {next_player.extra_turns} total turns to take! \n")
             break
 
     return "attack"
@@ -432,9 +438,8 @@ def main():
         player.has_played_skip = False
 
         if player.extra_turns > 0:
-            print(f"{player.name} has {player.extra_turns} extra turn(s)!\n")
-            player.extra_turns -= 1
-
+            betterprint(f"🔴🔴🔴 {player.name} has {player.extra_turns} turn(s) remaining! 🔴🔴🔴\n")
+            sleep(1)
 
 
         turn_ended = False
@@ -478,9 +483,22 @@ def main():
                 input("Done reading? Press Enter to move on...")
                 clear()
                 continue
-        if not attack_played:
+
+        if attack_played:
             current = (current + 1) % len(players)
+            while not players[current].alive:
+                current = (current + 1) % len(players)
         else:
+            # Normal turn end - check if player has extra turns remaining
+            if player.extra_turns > 0:
+                player.extra_turns -= 1
+                if player.extra_turns > 0:
+                    # Same player gets another turn
+                    betterprint(f"🔄 {player.name} has {player.extra_turns} turn(s) remaining!\n")
+                    sleep(1)
+                    continue
+
+            # No more turns, move to next player
             current = (current + 1) % len(players)
             while not players[current].alive:
                 current = (current + 1) % len(players)
