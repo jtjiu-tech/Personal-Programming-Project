@@ -1,6 +1,6 @@
 ## Personal Programming Project John Tjiu
 import time
-from colorist import rgb
+from colorist import rgb, ColorRGB
 import random
 from time import sleep
 import os
@@ -19,13 +19,38 @@ def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
 
 #Colours
-def gold(string):
-    rgb(string, 255, 204, 0)
-    return string
+def color_text(text, r, g, b):
+    return f"{ColorRGB(r, g, b)}{text}{ColorRGB(255, 255, 255)}"
 
-def red(string):
-    rgb(string, 255, 0, 0)
-    return string
+def gold(text):
+    return color_text(text, 255, 204, 0)
+
+def red(text):
+    return color_text(text, 255, 0, 0)
+
+def green(text):
+    return color_text(text, 0, 255, 0)
+
+def cyan(text):
+    return color_text(text, 0, 255, 255)
+
+def magenta(text):
+    return color_text(text, 255, 0, 255)
+
+def blue(text):
+    return color_text(text, 0, 150, 255)
+
+def orange(text):
+    return color_text(text, 255, 165, 0)
+
+def pink(text):
+    return color_text(text, 255, 105, 180)
+
+def bright(text):
+    return color_text(text, 255, 255, 100)
+
+def dim(text):
+    return color_text(text, 150, 150, 150)
 
 
 def announce_look_away():
