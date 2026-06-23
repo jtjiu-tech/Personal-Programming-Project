@@ -483,6 +483,7 @@ def main():
         player.has_played_skip = False
 
         if player.extra_turns > 0:
+            players.extra_turns -= 1
             betterprint(f"🔴🔴🔴 {player.name} has {player.extra_turns} turn(s) remaining! 🔴🔴🔴\n")
             sleep(1)
 
@@ -529,30 +530,16 @@ def main():
                 clear()
                 continue
 
-        if attack_played:
-            current = (current + 1) % len(players)
-            while not players[current].alive:
-                current = (current + 1) % len(players)
+        if player.extra_turns > 0:
+            # Same player gets another turn
+            betterprint(f"🔄 {player.name} has {player.extra_turns} turn(s) remaining!\n")
+            sleep(1)
+            continue
         else:
-            # Normal turn end - check if player has extra turns remaining
-            if player.extra_turns > 0:
-                player.extra_turns -= 1
-                if player.extra_turns > 0:
-                    # Same player gets another turn
-                    betterprint(f"🔄 {player.name} has {player.extra_turns} turn(s) remaining!\n")
-                    sleep(1)
-                    continue
-
             # No more turns, move to next player
             current = (current + 1) % len(players)
             while not players[current].alive:
                 current = (current + 1) % len(players)
-    
-
-    for player in players:
-        if player.alive:
-            betterprint(f"\n🏆 {player.name} is the winner!!! 🏆\n")
-            break
 
 main()
         
