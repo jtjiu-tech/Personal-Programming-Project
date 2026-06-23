@@ -459,6 +459,7 @@ def cat_combos(player,players):
     
     announce_private_action(player, "CAT COMBO")
     print(f"📋 {target.name}'s hand (only {player.name} should see this):")
+    sleep(3)
     target.show_hand()
     
 
@@ -473,6 +474,7 @@ def cat_combos(player,players):
     stolencard = target.hand.pop(card-1)
     player.hand.append(stolencard)
     betterprint(f"{player.name} stole {stolencard} from {target.name}!\n")
+    sleep(2)
     announce_players_can_look()
     return "cat_done"
     
