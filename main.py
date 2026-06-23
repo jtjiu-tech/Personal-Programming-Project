@@ -443,11 +443,18 @@ def cat_combos(player,players):
         
     chosen_cat = cats[choice - 1]
 
-    player.hand.remove(chosen_cat)
-    player.hand.remove(chosen_cat)
+    removed_count = 0
+    for i in range(len(player.hand) -1, -1, -1):
+        if player.hand[i] == chosen_cat:
+            player.hand.pop(i)
+            removed_count += 1
+            if removed_count == 2:
+                break
 
-    target = select_target(player,players)
+    target = select_target(player, players)
     if target is None:
+        for i in range(2):
+            player.hand.append(chosen_cat)
         return "cat_failed"
     
     announce_private_action(player, "CAT COMBO")
