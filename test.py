@@ -234,7 +234,7 @@ last_action_target = None
 favor_cancelled = False
 
 
-def card_played(card_selected,player,players,deck):
+def card_played(card_selected, player, players, deck):
     global last_action, last_action_player, last_action_target
     
     if card_selected == DEFUSE:
@@ -243,14 +243,14 @@ def card_played(card_selected,player,players,deck):
         clear()
         return None
     elif card_selected in CATS:
-        return cat_combos(player,players)
+        return cat_combos(player, players)
     elif card_selected == ATTACK:
         last_action = "attack"
         last_action_player = player
         last_action_target = None
         announce_public_action(player, "ATTACK")
         player.has_played_attack = True
-        return attack(player,players)
+        return attack(player, players)
     elif card_selected == NOPE:
         announce_public_action(player, "NOPE")
         return nope()
@@ -266,11 +266,7 @@ def card_played(card_selected,player,players,deck):
         last_action_player = player
         last_action_target = None
         announce_private_action(player, "FAVOR")
-        if favor_cancelled:
-            favor_cancelled = False
-            betterprint("The favor was cancelled! No cards were stolen.\n")
-            return "favor_cancelled"
-        return favor(player,players)
+        return favor(player, players) 
     elif card_selected == SEE:
         announce_private_action(player, "SEE THE FUTURE")
         return seethefuture(deck)
@@ -294,7 +290,8 @@ def attack(player,players):
     #handle in main loop
 
 def nope():
-    global last_action, last_action_player, last_action_target,players, favor_cancelled
+    global last_action, last_action_player, last_action_target, players, favor_cancelled
+    
     if last_action is None:
         betterprint("There's no action to NOPE!\n")
         sleep(1)
@@ -316,13 +313,16 @@ def nope():
                 break
     
     elif last_action == "favor":
+
         favor_cancelled = True
-        betterprint("The favor was cancelled! No cards were stolen.\n")
+        betterprint("The favor has been cancelled! No cards will be stolen.\n")
+
     
-    last_action = None
-    last_action_player = None
-    last_action_target = None
-    favor_cancelled = False
+
+    if last_action != "favor":
+        last_action = None
+        last_action_player = None
+        last_action_target = None
     
     return "nope_success"
 
@@ -341,15 +341,19 @@ def shuffle(deck):
     #should work
 
 
-def favor(current_player,players):
-    global last_action, last_action_target,favor_cancelled
+def favor(current_player, players):
+    global last_action, last_action_target, favor_cancelled
     
+    # Check if this favor was cancelled BEFORE doing anything
     if favor_cancelled:
         favor_cancelled = False
+        last_action = None
+        last_action_player = None
+        last_action_target = None
         betterprint("The favor was cancelled! No cards were stolen.\n")
         return "favor_cancelled"
 
-    target = select_target(current_player,players)
+    target = select_target(current_player, players)
     if target is None:
         return "favor_failed"
 
@@ -363,34 +367,27 @@ def favor(current_player,players):
 
     while True:
         try:
-            card = input(f"{target.name}, which card would you give to {current_player.name}? (enter number): ")
-            card_index = int(card)
+            card_input = input(f"{target.name}, which card would you give to {current_player.name}? (enter number): ")
+            card_index = int(card_input)
             if 1 <= card_index <= len(target.hand):
                 break
             else:
-                print(f"Invalid choice!!! Choose a number between 1 and {len(target.hand)}  ")
+                print(f"Invalid choice!!! Choose a number between 1 and {len(target.hand)}")
         except ValueError:
-            print(f"Invalid choice!!! Choose a number between 1 and {len(target.hand)}  ")
+            print(f"Invalid choice!!! Choose a number between 1 and {len(target.hand)}")
 
-    cardindex = card_index -1
-    stolencard = target.hand.pop(cardindex)
-    current_player.hand.append(stolencard)
+    stolen_card = target.hand.pop(card_index - 1)
+    current_player.hand.append(stolen_card)
     clear()
-    betterprint(f"{current_player.name} has recieved {stolencard} from {target.name}! \n")
+    betterprint(f"{current_player.name} has received {stolen_card} from {target.name}! \n")
     sleep(3)
     announce_players_can_look()
-
-    #check if favor was noped
-    if favor_cancelled:
-
-        current_player.hand.remove(stolencard)
-        target.hand.append(stolencard)
-        betterprint("The favor was cancelled! Card returned.\n")
-        favor_cancelled = False
-        return "favor_cancelled"
+    
+    last_action = None
+    last_action_player = None
+    last_action_target = None
     
     return "favor_done"
-    #should work
 
 
 def seethefuture(deck):
