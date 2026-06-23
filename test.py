@@ -362,7 +362,8 @@ def favor(current_player, players):
 
     sleep(1)
     clear()
-    print(f" {target.name}'s hand (only {target.name} should see this):")
+    print(f"{target.name}'s hand (only {target.name} should see this):")
+    sleep(5)
     target.show_hand()
 
     while True:
