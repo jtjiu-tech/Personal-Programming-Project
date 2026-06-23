@@ -28,6 +28,36 @@ def red(string):
     return string
 
 
+def announce_look_away():
+    print("\n" + "="*50)
+    print("🔒 OTHER PLAYERS: PLEASE LOOK AWAY NOW! 🔒")
+    print("="*50)
+    for i in range(3, 0, -1):
+        print(f"👀 Looking away in {i}...")
+        sleep(1)
+    clear()
+
+def announce_players_can_look():
+    print("\n" + "="*50)
+    print("👁️ OTHER PLAYERS: YOU CAN LOOK BACK NOW! 👁️")
+    print("="*50)
+    sleep(1)
+    clear()
+
+def announce_private_action(current_player, action_name):
+    clear()
+    print("\n" + "🔒"*25)
+    print(f"🔒 {current_player.name} is using {action_name} - PRIVATE ACTION 🔒")
+    print("🔒"*25)
+    announce_look_away()
+
+def announce_public_action(player, action_name):
+    """Announce a public action that everyone can see"""
+    clear()
+    print("\n" + "⭐"*30)
+    print(f"⭐ {player.name} played {action_name}! ⭐")
+    print("⭐"*30)
+    sleep(1)
 
 
 
@@ -149,6 +179,7 @@ def player_turn(player):
 
 
 def draw_card(player,deck):
+    announce_private_action(player, "DRAWING A CARD")
     card = deck.pop(0)
     player.hand.append(card)
     getting_card()
@@ -156,6 +187,7 @@ def draw_card(player,deck):
     sleep(2)
     player.show_hand()
     input("Done reading? Press Enter to move on...")
+    announce_players_can_look()
     clear()
     return check(player)
 
@@ -188,18 +220,24 @@ def card_played(card_selected,player,players,deck):
     elif card_selected in CATS:
         return cat_combos(player,players)
     elif card_selected == ATTACK:
+        announce_public_action(player, "ATTACK")
         player.has_played_attack = True
         return attack(player,players)
     elif card_selected == NOPE:
+        announce_public_action(player, "NOPE")
         return nope()
     elif card_selected == SKIP:
+        announce_public_action(player, "SKIP")
         player.has_played_skip = True
         return skip(player)
     elif card_selected == SHUFFLE:
+        announce_public_action(player, "SHUFFLE")
         return shuffle(deck)
     elif card_selected == FAVOR:
+        announce_private_action(player, "FAVOR")
         return favor(player,players)
     elif card_selected == SEE:
+        announce_private_action(player, "SEE THE FUTURE")
         return seethefuture(deck)
     return None
 
@@ -249,6 +287,7 @@ def favor(current_player,players):
 
     sleep(1)
     clear()
+    print(f" {target.name}'s hand (only {target.name} should see this):")
     target.show_hand()
     card = input(f"{target.name}, which card would you give to {current_player.name}? (enter number): ")
     while True:
@@ -267,6 +306,7 @@ def favor(current_player,players):
     clear()
     betterprint(f"{current_player.name} has recieved {stolencard} from {target.name}! \n")
     sleep(3)
+    announce_players_can_look()
     return "favor_done"
     #should work
 
@@ -279,6 +319,7 @@ def seethefuture(deck):
     sleep(2)
     input("Press enter to continue...")
     clear()
+    announce_players_can_look()
     return "Seen_the_future"
     #should work
 
@@ -327,6 +368,9 @@ def cat_combos(player,players):
     target = select_target(player,players)
     if target is None:
         return "cat_failed"
+    
+    announce_private_action(player, "CAT COMBO")
+    print(f"📋 {target.name}'s hand (only {player.name} should see this):")
     target.show_hand()
     
 
@@ -341,6 +385,7 @@ def cat_combos(player,players):
     stolencard = target.hand.pop(card-1)
     player.hand.append(stolencard)
     betterprint(f"{player.name} stole {stolencard} from {target.name}!\n")
+    announce_players_can_look()
     return "cat_done"
     
 
@@ -503,8 +548,6 @@ def main():
             while not players[current].alive:
                 current = (current + 1) % len(players)
     
-
-
 
     for player in players:
         if player.alive:
