@@ -1,427 +1,319 @@
 import random
+from random import randint
+import colorama
+from colorama import init, Fore, Back, Style
+colorama.init()
+import os
+import time
 
-global player_names, player_colors
+BLUE = Fore.BLUE
+YELLOW = Fore.YELLOW
+GREEN = Fore.GREEN
+CYAN = Fore.CYAN
+WHITE = Fore.WHITE
+RED = Fore.RED
+MAGENTA = Fore.MAGENTA
+BLACK = Fore.BLACK
+PLAYER_DOT = "●"
 
-# ANSI Colors 
-class BgColor:
-    CYAN = "\033[46m"  
-    OFF = "\033[0m"     # Reset color
+VALID_colours = ["BLUE", "YELLOW", "GREEN", "CYAN", "WHITE", "RED", "MAGENTA", "BLACK"]
 
-COLOR_AVAILABLE = True
 
-class Colors:
-    RESET = "\033[0m"
-    CYAN = "\033[46m"      # Background cyan
-    RED = "\033[41m"       # Background red
-    GREEN = "\033[42m"     # Background green
-    YELLOW = "\033[43m"    # Background yellow
-    BLUE = "\033[44m"      # Background blue
-    MAGENTA = "\033[45m"   # Background magenta
-    WHITE = "\033[47m"     # Background white
 
-# Map player color names to ANSI codes
-COLOR_MAP = {
-    "red": Colors.RED,
-    "green": Colors.GREEN,
-    "blue": Colors.BLUE,
-    "yellow": Colors.YELLOW,
-    "cyan": Colors.CYAN,
-    "magenta": Colors.MAGENTA,
-    "white": Colors.WHITE,
-    "default": Colors.CYAN
-}
+def clear_terminal():
+    os.system("cls" if os.name == "nt" else "clear")
 
-try:
-    from playsound import playsound
-    SOUND_AVAILABLE = True
-except ImportError:
-    SOUND_AVAILABLE = False
+def show_loading_message(message, seconds):
+    clear_terminal()
+    print(message)
+    time.sleep(seconds)
 
-PROVINCES = [
-    "Alaska", "Columbia", "Northwestern Territories", "Prairies", "Hudsonia", "Upper Canada",
-    "Northern Quebec", "Lower Canada", "Newfoundland", "Greenland", "Southeastern United States",
-    "Midwest", "Great Plains", "Rocky Mountains", "Pacific Coast", "Atlantic Coast", "Mexico",
-    "Central America", "Colombia", "Guyana", "Peru", "Amazonia", "Brazil", "Argentina", "Carribean",
-    "Iceland", "Jan Martin", "Macronesia", "Iberia", "Normandy", "Occitania", "Benelux",
-    "Switzerland", "Western Germany", "Eastern Germany", "Northern Italy", "Southern Italy",
-    "Greater Austria", "Poland", "Hungary", "The Balkans", "Romania", "Ruthenia", "The Baltics",
-    "Scandinavia", "Anatolia", "The Causases", "Muscovy", "Astrabhan", "Novogrod", "Eastern Muscovy",
-    "Urals", "Western Siberia", "Central Siberia", "Eastern Siberia", "Central Asia", "Mongolia",
-    "Manchuria", "Xinjiang", "Shanxi", "China", "Tibet", "Korea", "Japan", "Taiwan", "Indochina",
-    "Burma", "Eastern India", "Southern India", "Rajputana", "Pakistan", "Central India", "Himalayas",
-    "Andaman and Nicobar", "Maldives", "Lanka", "Phillipenes", "Malaysia", "Sumatra", "Borneo",
-    "Celebes", "New Guinea", "Western Australia", "Northern Territory", "South Australia",
-    "Queensland", "New South Wales", "Victoria and Tasmania", "New Zeeland", "Micronesia", "Fiji",
-    "Maghreb", "Western Sahara", "West Africa", "Nigeria", "Equatorial Africa", "Central Africa",
-    "South Africa", "Rhodesia", "Mozambique", "Madagascar", "East Africa", "Ethiopia", "Somalia",
-    "Somalialand"
-]
+def get_valid_int(question):
+    valid = False
+    number = 0
 
-# Basic Adjacency Logic (RISK-style connections)
-ADJACENCY = {
-    "Alaska": ["Northwestern Territories", "Pacific Coast", "Columbia"],
-    "Columbia": ["Alaska", "Northwestern Territories", "Pacific Coast"],
-    "Northwestern Territories": ["Alaska", "Columbia", "Prairies", "Hudsonia"],
-    "Prairies": ["Northwestern Territories", "Great Plains", "Hudsonia"],
-    "Hudsonia": ["Northwestern Territories", "Prairies", "Upper Canada"],
-    "Upper Canada": ["Hudsonia", "Northern Quebec", "Lower Canada"],
-    "Northern Quebec": ["Upper Canada", "Lower Canada", "Newfoundland"],
-    "Lower Canada": ["Upper Canada", "Northern Quebec", "Atlantic Coast"],
-    "Newfoundland": ["Northern Quebec", "Greenland"],
-    "Greenland": ["Newfoundland", "Iceland"],
-    "Iceland": ["Greenland", "Scandinavia"],
-    "Southeastern United States": ["Atlantic Coast", "Midwest", "Carribean"],
-    "Midwest": ["Southeastern United States", "Great Plains"],
-    "Great Plains": ["Prairies", "Midwest", "Rocky Mountains"],
-    "Rocky Mountains": ["Great Plains", "Pacific Coast"],
-    "Pacific Coast": ["Alaska", "Columbia", "Rocky Mountains", "Mexico"],
-    "Atlantic Coast": ["Lower Canada", "Southeastern United States"],
-    "Mexico": ["Pacific Coast", "Central America", "Carribean"],
-    "Central America": ["Mexico", "Colombia"],
-    "Colombia": ["Central America", "Guyana", "Peru"],
-    "Guyana": ["Colombia", "Brazil"],
-    "Peru": ["Colombia", "Amazonia", "Brazil"],
-    "Amazonia": ["Peru", "Brazil"],
-    "Brazil": ["Guyana", "Peru", "Amazonia", "Argentina"],
-    "Argentina": ["Brazil"],
-    "Carribean": ["Mexico", "Atlantic Coast"],
-    "Scandinavia": ["Iceland", "The Baltics"],
-    "The Baltics": ["Scandinavia", "Poland", "Muscovy"],
-    "Poland": ["The Baltics", "Eastern Germany", "Ruthenia"],
-    "Muscovy": ["The Baltics", "Novogrod", "Eastern Muscovy"],
-    "China": ["Mongolia", "Xinjiang", "Tibet", "Indochina", "Korea"],
-    "Japan": ["Korea"]
-}
+    while valid == False:
+        try:
+            number = int(input(question))
+            valid = True
+        except ValueError:
+            print("Please enter a whole number.")
 
-class Player:
-    def __init__(self, name, color):
-        self.name = name
-        self.color = color.lower() if color else "default"
-        self.ansi_color = COLOR_MAP.get(self.color, Colors.CYAN)
-        self.provinces = []
+    return number
 
-class Province:
-    def __init__(self, name):
-        self.name = name
-        self.owner = None
-        self.infantry = 2
-        self.tank = 1
-        self.commando = 0
+def display_help():
+    print("SNAKES AND LADDERS RULES")
+    print("Each player starts on square 1.")
+    print("Players take turns rolling the dice.")
+    print("Move forward by the number rolled.")
+    print("Ladders move you up the board.")
+    print("Snakes move you down the board.")
+    print("If you land on another player, they go back to square 1.")
+    print("You must roll the exact number to reach the final square.")
+    print("The first player to reach the final square wins.")
+    print()
+    print("Board labels:")
+    print("L1 Start = the start of ladder 1")
+    print("L1 End = the end of ladder 1")
+    print("S1 Start = the start of snake 1")
+    print("S1 End = the end of snake 1")
+    print()
 
-# ==================== DISPLAY ====================
-def load_soldiers():
-    print(BgColor.CYAN + """     ░         ▒▒░    ░▒░                                                                                                                                        
-    ░░        ▒▒░░  ░▒░░░                                                                                                                                        
-   ░░░░ ▒░    ░░░    ░                                                                                                                                           
-  ░▒▒▒▒░     ░░░░      ░░                                                                                                                                        
-  ░▒▓░     ░ ░░░░      ░░            ░░░░░░░░░░                                                                                                                  
- ░░ ░░░   ░░░░░░░░░     ▒░         ░▒▒▒▓▒▒▓▓▒▒▒▒▒░                                                                                                               
-░░      ░  ░░░░ ░░░░░            ░▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒░                                                                                                              
-░░      ░  ░░░░░▒▒▒░░            ▒▓██████▓▓▓▓▒▒▒▒▒▒▒                                                                                                             
-░         ░░░░░░▒▒░░░           ▒▓▓███▓▓▓████████████▓                                                                                                           
-░        ░░░   ░▒▒░▒░           ▒▓█▓▓█████████████████▒                                                                                                          
-░ ░     ░░░░ ░ ░░░░▒░           ░▓▓███████████████████                                                                                                           
-        ░░░░░░░░░░░▒░            ▓████████▓▓▓█▓▓▓░▓██                                                                                                            
-       ▒░░░░░░░ ░░░░            ░████████▓▓▒▒▒▓▓▓▒░▓                                                                                                             
-      ▒▒░░░░░░░░░ ░░░░           ██████████▓▓▓▓██▓▒                                                                                                              
-░ ░░░▒▒▒░░░░░░░░░░░░▒░         ░▓█████████████▓▓▓▒                                                                                                               
-  ░░▒▒▒░░░░░░░░░░░░░░         ▓▓▒████████████▓▓▓▓░                                                                                                               
-░░░░▒▒▒░░░░▒░░░░░░░░░        ▒█▓█████████████████░                                                                                                               
-░░░▒▒▒▒▒▒▒▒▒░░░░░░░          ▓██████████████████▓░░░                                                                                                             
-░░▒▒▒▒▒▒▒▒▒▒░░░░░░░    ░▒▒▒▒▒▓██████████████████▓░▒▒▒▒                                                               ░░░░░░                                      
-████▓▓▓▓▓░▒▒░░░░░░░  ░░▒▒▒▒▓████████████████████▓▒▒▒▒▒▒▒▒░                                          ▒▓▓▓      ░▒▒▒░░░                                            
-███████▓▓▓▓▒░▒░░░░░░░▒▒▒▒▓▓████████████████████▓▓▒▒▓▓▓▓▓▓▓▒▒                                  ░▒▓▓▒▒▒▒▒▒░▒▒▒░░                                                   
-█▓▓▒▒▒▒▒▒▒▒▒▒░░░░▒░▒▒▒▓▓▓█████████████████████▓▓▒▓▓██████▓▓▒▒                         ░▒▒▓▓▒▓▒▒▒▒▒▓▓▓██▓                                                         
-▓▓▓▓▒▒▒▒▒▒▒░░░░░▒▒▒▓▓▓█████████▓███████▓█████▓▓▒▒▒▓▓██▓███▓▓▓▒                ░░▒▒▓███████▓▓░▓██▓▓▒                                                              
-▓▓▓▓▓▒▒▒▒▒▒▒░░░▒▒▓▓▓▓████▓▓▒▓▓▒▒▒▓▓▓▒▓▓██▓▓▓▓▓▒▒▒▓▓▓▓▓▓██▓▓▓▓▓▓▓       ░▒▒▓▓█████████▒░                                                                          
-▓▓▒▒▒▒▒▒▒▒░░░░▒▓▓▓▓████████▓▓▒▒▒▒▒░░░░░▒▒▒▒▓▓██▒▒▒▒▒▒▓████▓▓▓▒▓▓▒▒▒▒▒▒▓██████▓▒░                                                                                 
-▓▓▒▒▒▒▒▒▒▒░░░░▓██████████▓▓▓▒▒▒▒▒▒▒▒▒▒░▒▒▒▓▓▒░░▒░░░░░▒▓▒▒▓▓▓▓▒▒▓▒▓▓███▓█▓░                                          ▒▒░░░                                        
-▒▒▒▒▒▒▒▒▒▒░░▒▓███████████▓▒▒▒▒▒░░▒▒▒▒▒▒▒▒▒▒▒▒░░▒▒▒░▒▒▓▓▒▒▓██████████▓░█▓░                                      ▒██▓▓▓▓▓▓▒▓▓▒                                     
-▒▒▒▒▒▒▒▒▒▒▒▒▒█████▓▓█████▓▒▒▒░▒▒▒▒▒▒▒▒▒▒▒▒▒▒░░░░▒▒▒▒▒▓█▓▓▓▓███████   ▓█░             ▒▒▒▒▒▒▒▒                 ▓█████▓▓▓▓▓██▓▒                                    
-▓▓▓▒▒▒▒▒▒▒▒▒▓██▓▓▓▓███▓▓▓▓▒▒░▒▒▒▒▒▒▒▒░░░▒▒▒░░░░░░░░▒▒▒▒▓▓▓████████▒░▓▓            ▒▓▓▓▓▓▓▓▓▒▓▒▒▒             ▓██████████████▓▒                                   
-▓▒▒▒▒▒▒▒▒░▒▓█████████▓█▓▒▒▒▒▒▒▒▒▒▒░░▒░░▒▒░░░░ ░░░░░░▒▒▒▓▓▓██████▒░▓█▓           ░▓▓█▓▓▓▓▓▓▒▒▒▒▒▒▒░          ░▓▓████████▓▓▓▒▒▒▒░                                  
-▓▒▒▒▒▒▒▒▒▒▒███████████▓▓▓█▓▓▓▓▓▒▓▓▓▒▒▒▒░▒░░░░░░░░░░░░▒▒▒▒▓██████▓▓██░          ░▓▓███▓▓▓▓▓▒▒▒▒▒▒▒▒▒         ░▓█████▓▓▓▓▓███▓████░                                
-▓▓▒▒▒▒▒▒▒▒████████████▓███▓███▓▓▓▓▓▓▓▒▒▒▒▓▒▒▒░░░░░░░░░░▒▒▓█████████▒▒          ▓██▓███▓▓▒▒▒▒▒▓▓▓▓▓▒▒         ▓██▓▓█████████████                                  
-████▓▒▒▒▒▓█████████████████████▓▓▓▓▒▒█▓▒▒▒▒▒▒░░░░▒░░░░░▒▒█████████▓▓▒          ▓█████████████████████▒       ▒▓████████▓▓▓▓▓▒▓▓                                  
-█████▒▒▒▒███████████████▓██████▓▓███████▓██████▒░░▒░░░░░▒██████████▓▒          ▓██▓████████████▓▓████▒       ████████▓▒▓▒▒▓▓▒░                                   
-██████▓░   ░███████████████████████████████████▓▒░▓▒▒▒░░▒█████████▓▓░          ▓▓▓██████▓▓▓▓███▒████▓       ▒▓███████▓▓▓██▓█▒                                    
-▓▓█▒▒█▓    ▒█████████████████████▓▓████▓▓██████▓▒▒█▓▒▒░░▓█████████▓▓           ▒███████▓▒▒▒░▒▒▒▒▒▒█▒       ░▒▓███████████▓▒▒                                     
-▒▒▒▓▓▒     ▒▓▓███████████████████████░▒▓▓▓▓████▓▓▓███▒▒░▓████████▓▒            ███████▓▓▓▒▒▒▒▓██▓░     ▒▒▓▒▒▓▓████████████▒                                      
-▓▒▒▒▓▒▒    ▒▒▓█████████▓▓▓█▓████████▒▓▓▓▓███████▓▒█████████████▓▒░            ▒▓██████▓▒▓▒▒▒▒▒▒░░  ░░▒▒▓▒▒▓▓██████████████▒▒░▓█                                  
-▓▓▒▒▒▒▓▒░  ▒▓████▒████▓▒▒▒▒▒▒▒▓████▓████████████▓▒██████████▓▒▒▒▒             ▓█████████▓▓▒▒▒▒▓█▒ ░░▒▒▒▒▒▒▒▓████████████▒█▓▒▓▓▒▒▒                                
-▓▒▒▒▒▒▓▓▓▒ ░█▒    ░████▓▒░░░░▒▒▒▒▓▓█████████████▓▒█████████▓▓▓██▒░░          ▒▒▓▓███████████▓▒▒▒░ ░░▒▒▒▒▒▓▓▓██████████▒███▓▒▒▒▒▒▒▓░                              
-▓▓▓▓▓▓▒▒▒░         ▒█████▓▒▒▒░▓█████████████▓▓▓█▒▒█████████▓▓▓██▓░          ▓▓▒▒▒▒▓▓██████████▒   ░░▒▒▒▒▒▒▓█▓▓▓▒▒▒▓▓█▒████▓▒▒▒▓▒▓▓▒                              
-▒▒▓▓█▓▒▒▒▒          ▓█████████████████████████▓▓▓▓█████████▓▓██▓▓█▓        ░▒▓██▓▓▓▒▒▓█████████▒░░░░▒▒▒▒▓▓▓██▓██▓▓▒▒██████▓▓▓▓███▒▒▒░                            
-▒▒▒▒▒▒▓▓█▓▓░         ▒▓███████▓▓█████████▓██▓█▓▓▒▒▓█████████▓█████░       ▒░░░▒▒▓████▒░▒▓██████▒▒▒░▒░░░▒▓█▒▒▓▓█▒▒▒██▒▒▒▓████▓▓██▓▒▒░░░    ░░ ░░░░░░▒░     ░░▒▒▒▒▒
-▒▒▓▓▓▓▓█████▓▒         ▒▓████████▓▒▓▓▓▓▓██▓▓▒▓▒▒░▓███▓▓▒▓▓▓▓████▓▒     ░▒▒░░░░░▒▒▒▒███▓▒░▒▓▓▓██▒░░░▓▓▒▒▒▒▒▓█▓█▓▓▓███▓▓▓▒▓██▓░  ░▓▓▒▓▓▓▒▒▒░░░▒▒░░░░░▒▒███▒▓▒▓█████
-██▓▓▓████▓▓█▓▓▒    ░▒▒▓██████████████▒▒███████▓▒░▓▒▒▒▒▒▒▒▒▒▒▒█▓▒▒    ░▒▒▒░░░▒▒░░▒█▒▓▓███▒░░░▓██▒░░░░█▓▓▒▒░░▒  ▒██▓▒▓▒ ░░░░  ░░░ ░▒▒▒▒▒▒▒░░░░░░░░░░▒▒▓██▒▓▓▓▓▒▓▒▒▓
-▓▓▓▓▓▓▓███▓▓▓▓▓░▒▓▓▓▓▒▓▓▓████████████▒████▓█▓▒▒▒▒▒▒▒▒▒▒▒▓▓████▒     ▒▒▓▒░ ░░ ░▒▒▒▓▒▒▓▓████▓▒▒██▒▒░▒░████▓▒▓▓█▓▒▓░░░░ ░░░░▒░░▒▒▒░▒▓▓▒▒▒▓▓▓▓▓▓▒▓███████████▓███▓███
-▓▓▓██▓▓▓▓▓▓▓▓▓▓▓█▓▓▒▒▓▓███▓█████████▒▓█▓▓▓▓██▒▒▒▒▒▒▒▒▓██▓▓▓▓▒▒░    ▒▒▒▒▒░░░░░░▒▒▒▒░▒▒▓▒▒▒▓█████░▒▒  ▒███▓▓█████▓   ░░▒░░░▒░▓█▓▓▓███████▓▒▒▓▒▒▒▓█▓▓███████▓▓████▒ 
-▓▓▓▓▓▓▓▓▓▓▓█▓▓▓▓▓▒▒▒▒▓████▓█▓▓▓▓███▒▒▓███████▓▓▒▒▓▓▓███▓▓▒▒▒▒░    ▒▒▒▒░░░░▒▒▒░░▒▒▒▒▒▒▒▒▒▒▒▒█▓▒█▓██▓█▒▓▒▒▓█████▒░▒░▒░   ░░░▒███▓██████████▒▓█████▓▓██████████     
-▓▓▓▓▓▓▓▓▓▓▓▓▒▓▓░ ▒▓██████▒▓▓▓██████▒▒▓███████▓▓▒▓████▓▓▓▓▓▓▒▒░    ▒▓▒▒▒▒░░░░░░░░░▒▒▒▒▒▒▒▒▒▓▒▒▒█▓▒▓▓▒▒▓██████▒▒▒▒▒▒▒█▓▒░▒▒▓██▓░▒ ▒███████████████▓▓▓███████▒      
-▓▓▓██▓▓▓▓▓▓▓▓▓▓▓  ▓██████▓▓▓▓▒▒▓▓▓▓▓▓▓▓█▓▓██▓▓▒▒▓██████▓▒▒▒▒▒▒░   ▒▓▒▒▒▒░░░▒▒▒▒░░░▒▒▒▓██▓▒▓▓█▓▓█▓▓▒▒▓█████▒▓████▒█▓▓█▒▒██▒▒       ░█████████████████████▒        
-▓▓▓▓██▓▓▓▓▓▓▓▓▓▓░  ▒█████▒▓▓▓▓▓▓▓▓██▓███████▒▓▓▒▒███▓▓▓▒▒▒▒▒▒▒▒   ▒▓▒▒▒▒▒░░▒▒░░▒▒░▒▓▓▓█▓▓▓▓███▒█▒▒▓█████▓███████▒ ▓▒▓█▓▒▒░▒▓░▓██████▓██████████████▓             
-▓▓▓▓███▓▓██▓▓█▓▓░       ░▓▓█▓▓▓▓▓███▓███████▓░▒▒░   ░▒███████▓▒   ░▓▒▒▒▒░░░░░░ ░ ░▒█▓▒▓██▓▒████▒▒▓████████████████▒ ░▓▓▒▓██▓▓██▒▒▒▒▒████████████▒                
-▓▓▓▓▓▓▓███▓▓▓▓▓▓▓▒      ░▒▓▓▓▓▓▒▒▒▒▒▒▒▒▒▓▓▓▒░   ░▒▒▒▓██████▓▓▓▓░   ▒▒▒▒▒░░░   ░▒████▓▒▓███▓▒▒░▓▓▓▓██████████████████▒ ▒████████▓▓▒▒▒▓████████████▒        ░░░    
-█▓▓▓█▓▓▓▓▓▓▓▓▓█▓▓▓      ░▒▒▒▒░░░░░░░░░▒▒▓▓▒░ ░▒▓▓███████▓▓▓▓▓█▓▒   ▓▒▒▒▒░ ░▒▓██▒▒▒▓▒░░░▒░   ▒▒░▒█▓███████████████████▓░ ██████▓▒▒░░░░░▓█████████▓▓      ░▒▒▒▒    
-████▓▓▓▓▓▓▓██▓▓▓▒▓▒░░░░░░▒▒▒▒▒▒▒▒░▒▒░▒▒░░ ░░▒▓███████▓▓▓▓▓▓▓▓▓▓▒▓▓▒▓▓▓▒▒░▒█▒░▒▓░▒▓▓  ░░░   ░▒▒▒▓▓██████████████▓▓▓▓████▒ ░███▓▓▒▒▒▒▒▒░░██▓▓█████▓▓▒     ▒▒▒▒▓▓▓▓█
-███▓████▓▓▓▒▓██▓▓▓▒░▓█▒▒▓▓▓▓▓▓▒▒▒▒▒▒▒▒▓▓▓▒▒▓█▒███████████▓▓▓▓▓▓▓▓▓▒▓▓▓▒░▒▓▒▒▒▒▒▒▒▓▒▒░░   ░░▒▒▒▒███████████████▓▓▓▓▓▓██▓▓▓░ ▓█▓███▓▒▒▓▓▓▒▓▓▓██████▓▒    ░▒▒▓▒▒▓▓▓▓
-████▓██▓▓▓█▓▓▓█▓▓▓▓▓▓▒▓▓██▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒█▒████████████▓▓▓▓▓▓▒▒▓▓█▓▒▒▓▓▒▓▓▓░▒▒▓▓░░░▒▒▒▓█▓▓▓███████▓▓▒▒▓▓▓███▓███████▓██▓ ░▓████▒▒▓▒▓█▓▒███████▓▒  ░▒▒▓▓▒▓▒▒▒▒▒
-█████▓▓▓▓▓▓▓▓▓▓██▓▒▓▓▓█████████▓▓▓▓▓▓▓▓▓▓▓▓▒▒▓█████████▓▓▓▓▓▓▓▓▒▓█▓▓█▓▒▒▓█░▒█▓██▓▒▓░▒▓███████████████████████████████████████░▓███████████████████▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒
-██▓▓▓▓▓▓▓▓▒▓▓▓▓▒▒▒▓▓▒████████████▓▓▓▓▓▓▓▓▓▓▒▒░▒█████████▓▓▓▓▓▓▓▒█████▓▒▒▓█▓█▓█████████▓▓██████████████████████████████████████░░██████████████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
-▓▓▓▓▓▓▓▓▓█▓▓▓▓▓▓▓▓▓▓▓████████▓▓▓▓▓▒▒▒▒░▒▒░░░░░▒███████████▓▓▓▓▓▒▒▓████▓▓██▓▓▓████████████████████▓▓████████████████████████████▓ ▒███████████▓▓▓▓▒░░▒▓▓▒▒▒▒▒▒▒▒▒▒
-█▓▓▓▓▓▓▓▓▓██▓▓▓▓▓▓▓▓▓██████▓▒▒▒▒▒▒░░░░▒▒▒▓▓▓▒▒▓██████████████▓▓▓▒▓▓▓██████████████████████████████▒▒█████████████████████████████▒ ▓███████████▓▓██▒▒▓▒▒▒▒▒▒▒▓▓▒▒
-▓▓▓▓▓▓▓▓▓▓▓██▓█▓▓▓▒▓▒██▓▒██████████████████████▓███████████████▓▓▓▓▓▓██████████████████████████████▒▒▓█████████████████████████████▓█████████████▓▒▒▒▒▒▒▒▒▒▒▓▓▓▒▒
-█▓▓██▓▓▓▓██████▓▓▓▓▓▒▓▓████████████████▓▓▓███▓▓██▓██████████████████████████████████████████████████████████▓███████████████▓░░░█████████████████▒▓▒▒▒▒▒▒▓▓▓▓▓▓▓▒
-▓▓▓███▓▓▓▓██▓▓██▓▓▓▓███████████████▓▓▓▓▒░▒▒▒▓▒▓███▓▓▓███████████████████████████████████████▓███████████████▓██████████████▓▒░░░░ ▒██▒██████████▒▒▓▓▓▒▒▒▒▒▓▓▓▒▒▒▒
-▓▓█▓██▓▓▓█▓▓▓▓▓██▓▓▓▓▒█████████▓▓▒░░░▒▓▒ ░░▒▓█████████▓▓████████████████████████████████▓▓▒▓█▓▒▓███▓██████▓█▓▓█████████████▓░▒▓███████▒░░░░░▒▒▒▓▒▒▒▒▓▒▒▒▓▓▓▒▒▒▒▒▒
-██████████▓██▓▓█▓░   ▒██████████▓▒▒░▒▓▓▓▒▒▒▓███▓████████▓██▓▓████████████████████████▓▓▓▒▒▒▒░░░░░░████████▒▒░▓████████████▓▒▓███▒▒▒▓██▓▓▓██████▓▒░▒░░▒▒▒░░░░░░░░▒
-█████▓█████▓▓▓▓▒░░░▒░▓███████████▓▒▒▒▒▒▒▒▒▒█▓▓▓█████████████████████████████████████▓▓▒▒▒▒▒▒░░░░░░░░▒████▓▒▒▒▒▒▓▒████████▓▓▓▓▓▓▓▒▒▒▓██▓▒▒▓████▓░░░▒▒▒░░░░░░▒░▒▒▒▒
-██████████▓▓▓▓▓▓▒▒▒▒▓▓████████████▓▓█▓▓▒▒▒██▓▒████████████████▒▒▓█████████████████▓▓▓▒▒▒▒▒▒▒▒░░░░░  ░▒▒▓██▓▓▓▒▒▒███▓▓▓▓▓▒▒▓▓█████▓▒▒░░░▒▒▓▓███▓░░░░░▒░░▒▒▒▒░▒▒▒▒▒
-▓▓██████████▓▓▓▓▓▓▓███████████████████▓▒▒░░░░▓▓▓▓█████████████▒▓█████████████████████▓█▓░░ ░░ ▒▓████▓▒▓█████▒▒▒▓▓▓▓▓▓█████▓▓▓▓▓▒▒▒▒▒▒░▒░░███▓▒░▒░░▒▒▒▒▒░▒░░░▒▒▒▒▒
-█▓▓▓▓▓▓█████▓▓▓▓█▓██████████████████▓▓▓█▓░░░░   ░▒▓███████████▒▒▒▓███████████████▓▒░░░░▒▒▒▒▓▓▒▓▓▓███▓▒▒▒░▒▓▓████████▓▓▓▓▓█▓▓▓██▓▒▒▒▓▓███████▒▓▒▒▒▒░░▒▒▒▒░░▒▒▒▒▒▒▒
-████▓▓███████▓▓▓██████▓▓███████████████▓▒░░░░▓▒▓██▓██████████▓▒▒▒▓▓█████▒▒▓▒░░░░▒▒▓▓▓▓█████████▒▒▒▓█▓█████████▓█▓▒▓███▓▓▓█▓▓▓▓█████████▓▓▒▓▓█▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
-█████▓█▓▓▓▓▓▓▓▓▓▓▓▓▓█▓█▓▓█████████████▓▒▒░░░░▒░░░▒▓██████████▒▒▒▒▒▒▒▒░░░░░░▒▓▓█████████████████▓▓▓██████▓▓███▓▒▒▓▒▒███████▓██████████████████▓░░░░▒▒▒▒▒▒▒▒▓▓▓▒▒▒▒
-█▓█▓▓▓▓▓▓▓▓▓▓▓▓▓██▓▓▓█▓█▓▓▒█████████▓▓▓▒▒░░░░▒▒░▒░ ░█████▓▒▒▒░░░░▒▒▒▓▓▒▒▓███████████████████████████████▒▒████▓▒▒░▒░▒▓██████████████████████▒▓▒░    ▒██▓▒▒▒▒▒▒▒▒▒
-▓██▓▓██▓██▓▓▓▓▓▓▓█████▓██▓▓████████▓█▓▒▓▒▒▒▒░▒▒▒▒▒▒▒▒▓▒░░▒▒▒▓▓▓▓▓▓▓▓▓████████████████████████████████████████▓▓▓▒▒▒░░▒███████████████▓█████████▓▒▒▒░░  ▓▓▒▒▒▒▒▒▒▒▒
-█▓██▒▒▓▓▓▓▓▓▓▓███▓▓▓██▓██▓▒▓██▓▓███▒▓▓▒██▒▒▒▒▒▒▒▒▒▒░▒▒▒▒▒▒▓▓▓███████████████████████████████████████████████████▓▓▒▒░▒█████████▓██▓▓███▓▓▓▓▓██▒░░▒▓▓▓▒▒██▓▓▓▒▒▒▒▒
-██▓▓▓██▓█▓▓▓▓█▒▒▓██▓▒█████▓▒█████▒▒▒▓░▒▓▒▒░▒▓█▓▓████▓▒▒███▓▓████████████▓▒████▓█████████████████████████████████▓▓▒▓░ ▓██████▓▓█▓▓▓▓███▒▒░▒▒▓█▓▓█▓██▓▓████▓██▓▒▒░
-██▓██████████▒▒▒▓██▓▓▓█▓██████▓▒▒▒▒░░▒▒▒▒▒▓████▓▒▓▓▓▓▒▓███▓▓▒███▓████████▒░████████████████████████████████████▓▓▒░░░   ▓████▓▒▒▓▓█▓▓▓▓▓▒▒▒▒▓▓▒▒▒▓▓▓▒▒▓██████▓█▓▓
-▓██▓▓▓▓▓▓▓█████████▓▓▓███████▓██████▓▓▓▓█████████▓▒▒▓███████▓▓▓▓█████████▓░▒██▓▓▓▓██████████████████████████████▓▓▒░░░░░ ░░▒██▓▒▒▒▒██▓████▓▓▓▓▒▓▒▓▓▒▒▓█▓▓▓▓█████▓
-███▓▓▓▓▓▓▓█████████████████▓█████████████████████▓▓▓█▓▓▓█████▓████████████▒▒██▓█████████████████████████████████▓▓▒░░░░░▒▒▒███▓▒▒▒▒▒████████▓▒▒█▓▒▒▓▒▓█▓▓█████▓▓█
-███▓▓██▓███████████████████▓▓████████████████████▒▓▓▓▓▓▓▓▓▓▓█████▓██████████████████▓▓▓▒▓███████████████████████▓▒█████▓▓▓█████▒▒▒▒▒▓███████████████████▓█▓▓█▓▓██
-▓▓██▓▓▓▓▓▓███████████████████████████████████████▓▓████████▓▓▓▓▓███████████████▓▓▒▒▒▓▒▒░▒███████████▓▓██████████▓▓█████████████▓▒▒▒▒▒█████▓▓▓▓█▓▓████████▓▓▓▓█▓▒▓
-█▓██▓▓▓▓▓▓▓▓▓▓▓█████████▓▒▒▒▓▓████████████████████████████▓▒▓███████████████████▓▓▓▓▓▓▓▓▓▓█▓██████████▓▓▒▒▒▓████████▓███▓▒██████▓▒▒▒▒▓████████▓█▓▒▓██████████████
-████▓▓▓▓▓██████████████████████████████▓▒▒▒▒██████████████▓▒░▒█████▓▓████████████████████████████▓▓▓▒▒▒▒▒▒▒▒░▒▒▒▓▓▓█▒▓▓▓▓████████▓▒▒▒▓█▓▓▓▓▓▒▓▒▓██▓▓█▓███████████
-▓▓▓██▓▓▓▓▓▓██████████████████████████░░░░░░ ░▒▒▒▒▓█████████▓▓█▓███▓█████████████████████████▓▓▓▓▓▓▓▒▒▒▒░▓██▒▒▒▒░▒░▒▒▒░░▒░░░░░░▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓█▓▓████▓▓███▓███████
-▓███▓▓▓▓▓▒▒▓████████████████████████▒░░░░░░░▒▒▒▒▒░░▒░░▒▒▒▓█▓▒█▓███▓▓▒▒▒▒▒▓████████████████▓▓▓▓▓▓▓███▒▒▒▒▓█▓▓▒▓███▓▓▓▓▓▒▒▒▒░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓▒▓▓▓█▓███████
-▓▓▓▓▓█▓▓▓▒▓▓▓▓████████████████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░░ ░░░▒█▓███▓█▓▒▒▒▒░▒▓████████████████▓▒▒▒▒▒▓█▓▓▒▒██████▓██████████████▓▒▒▒▒▒▒▒▒▒▒▒▓▓▒▒▒▒▒▒▒▒▒▒▒▒▓▒▒▒▒▒▓▒▒▒
-▓▓▓▓▓██▓▓▓▓▓▒▒███████████████▓▓▓▒▓█▓▓▒▓▓▒▓▓▓▓▒▓▒▒▒▒▒▒▒░░░░▒▒▒▓██████▓▒░▒▒▒▒▒▓███████████████▓▒▒▓▓▒▒▒▒▒▓▒▒▒▓█████▒▓█████▓▒▓████████████████▓▓▓████████████████▓▓▓▓
-▓█▓▓▓▓▓█▓▓▓▓▓▓▓██▓████████████████▓▓▒▓▓▒▓▓█▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓▒▓████████▒▒▒▒▒░▒░░░▒▓███▓██████▓▓▒▒▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓██▓▒████▓▓████████████████████████████████████████""" + BgColor.OFF)
 
-def load_title():
-    print("""          _____                    _____                    _____                    _____          
-         /\    \                  /\    \                  /\    \                  /\    \         
-        /::\    \                /::\    \                /::\    \                /::\____\        
-       /::::\    \               \:::\    \              /::::\    \              /:::/    /        
-      /::::::\    \               \:::\    \            /::::::\    \            /:::/    /         
-     /:::/\:::\    \               \:::\    \          /:::/\:::\    \          /:::/    /          
-    /:::/__\:::\    \               \:::\    \        /:::/__\:::\    \        /:::/____/           
-   /::::\   \:::\    \              /::::\    \       \:::\   \:::\    \      /::::\    \           
-  /::::::\   \:::\    \    ____    /::::::\    \    ___\:::\   \:::\    \    /::::::\____\________  
- /:::/\:::\   \:::\____\  /\   \  /:::/\:::\    \  /\   \:::\   \:::\    \  /:::/\:::::::::::\    \ 
-/:::/  \:::\   \:::|    |/::\   \/:::/  \:::\____\/::\   \:::\   \:::\____\/:::/  |:::::::::::\____\
-\::/   |::::\  /:::|____|\:::\  /:::/    \::/    /\:::\   \:::\   \::/    /\::/   |::|~~~|~~~~~     
- \/____|:::::\/:::/    /  \:::\/:::/    / \/____/  \:::\   \:::\   \/____/  \/____|::|   |          
-       |:::::::::/    /    \::::::/    /            \:::\   \:::\    \            |::|   |          
-       |::|\::::/    /      \::::/____/              \:::\   \:::\____\           |::|   |          
-       |::| \::/____/        \:::\    \               \:::\  /:::/    /           |::|   |          
-       |::|  ~|               \:::\    \               \:::\/:::/    /            |::|   |          
-       |::|   |                \:::\    \               \::::::/    /             |::|   |          
-       \::|   |                 \:::\____\               \::::/    /              \::|   |          
-        \:|   |                  \::/    /                \::/    /                \:|   |          
-         \|___|                   \/____/                  \/____/                  \|___|          
-                                                                                                    """)
 
-def DisplayProvinces(province_objects=None):
-    for p in PROVINCES:
-        if province_objects:
-            prov = next((x for x in province_objects if x.name == p), None)
-            if prov and prov.owner:
-                color_code = prov.owner.ansi_color
-                print(f"{color_code}{p}{Colors.RESET}")
-            else:
-                print(p)
-        else:
-            print(p)
+def reset_other_players(current_player_index, player_positions):
+    current_position = player_positions[current_player_index]
+    for i in range(len(player_positions)):
+        if i != current_player_index:
+            if player_positions[i] == current_position:
+                print(f"Player {current_player_index + 1} landed on Player {i + 1}!")
+                print(f"Player {i + 1} has been sent back to square 1.")
+                player_positions[i] = 1
 
-def DisplayMap():
-    print("""⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣄⣠⣀⡀⣀⣠⣤⣤⣤⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-                    ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣄⢠⣠⣼⣿⣿⣿⣟⣿⣿⣿⣿⣿⣿⣿⣿⡿⠋⠀⠀⠀⢠⣤⣦⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠰⢦⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-                    ⠀⠀⠀⠀⠀⠀⠀⠀⣼⣿⣟⣾⣿⣽⣿⣿⣅⠈⠉⠻⣿⣿⣿⣿⣿⡿⠇⠀⠀⠀⠀⠀⠉⠀⠀⠀⠀⠀⢀⡶⠒⢉⡀⢠⣤⣶⣶⣿⣷⣆⣀⡀⠀⢲⣖⠒⠀⠀⠀⠀⠀⠀⠀
-                    ⢀⣤⣾⣶⣦⣤⣤⣶⣿⣿⣿⣿⣿⣿⣽⡿⠻⣷⣀⠀⢻⣿⣿⣿⡿⠟⠀⠀⠀⠀⠀⠀⣤⣶⣶⣤⣀⣀⣬⣷⣦⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣦⣤⣦⣼⣀⠀
-                    ⠈⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠛⠓⣿⣿⠟⠁⠘⣿⡟⠁⠀⠘⠛⠁⠀⠀⢠⣾⣿⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠏⠙⠁
-                    ⠀⠸⠟⠋⠀⠈⠙⣿⣿⣿⣿⣿⣿⣷⣦⡄⣿⣿⣿⣆⠀⠀⠀⠀⠀⠀⠀⠀⣼⣆⢘⣿⣯⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡉⠉⢱⡿⠀⠀⠀⠀⠀
-                    ⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣟⡿⠦⠀⠀⠀⠀⠀⠀⠀⠙⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⡗⠀⠈⠀⠀⠀⠀⠀⠀
-                    ⠀⠀⠀⠀⠀⠀⠀⠀⢻⣿⣿⣿⣿⣿⣿⣿⣿⠋⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⢿⣿⣉⣿⡿⢿⢷⣾⣾⣿⣞⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠋⣠⠟⠀⠀⠀⠀⠀⠀⠀⠀
-                    ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⣿⣿⣿⠿⠿⣿⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣾⣿⣿⣷⣦⣶⣦⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⠈⠛⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀
-                    ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠻⣿⣤⡖⠛⠶⠤⡀⠀⠀⠀⠀⠀⠀⠀⢰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠁⠙⣿⣿⠿⢻⣿⣿⡿⠋⢩⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-                    ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠙⠧⣤⣦⣤⣄⡀⠀⠀⠀⠀⠀⠘⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⠀⠀⠘⣧⠀⠈⣹⡻⠇⢀⣿⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-                    ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⣿⣿⣿⣿⣿⣤⣀⡀⠀⠀⠀⠀⠀⠀⠈⢽⣿⣿⣿⣿⣿⠋⠀⠀⠀⠀⠀⠀⠀⠀⠹⣷⣴⣿⣷⢲⣦⣤⡀⢀⡀⠀⠀⠀⠀⠀⠀
-                    ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⢿⣿⣿⣿⣿⣿⣿⠟⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⣷⢀⡄⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠂⠛⣆⣤⡜⣟⠋⠙⠂⠀⠀⠀⠀⠀
-                    ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣿⣿⣿⣿⠟⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⠉⣿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣤⣾⣿⣿⣿⣿⣆⠀⠰⠄⠀⠉⠀⠀
-                    ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⣿⣿⡿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣿⡿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢻⣿⠿⠿⣿⣿⣿⠇⠀⠀⢀⠀⠀⠀
-                    ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣿⡿⠛⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⢻⡇⠀⠀⢀⣼⠗⠀⠀
-                    ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⠃⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⠁⠀⠀⠀
-                    ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⠒⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀""")
 
-def DisplayProvinceOwner(province_objects, prov_name):
-    for prov in province_objects:
-        if prov.name == prov_name:
-            if prov.owner:
-                color_code = prov.owner.ansi_color
-                print(f"{color_code}{prov.name} is owned by {prov.owner.name}{Colors.RESET}")
-            else:
-                print(f"{prov.name} has no owner.")
-            return
-    print("Province not found.")
+def roll_dice():
 
-def DisplayTroopStatus(province_objects):
-    for prov in province_objects:
-        if prov.owner:
-            color_code = prov.owner.ansi_color
-            print(f"{color_code}{prov.name}: Infantry={prov.infantry}, Tank={prov.tank}, Commando={prov.commando} | Owner: {prov.owner.name}{Colors.RESET}")
-        else:
-            print(f"{prov.name}: Infantry={prov.infantry}, Tank={prov.tank}, Commando={prov.commando} | No owner")
+    return randint(1, 6)
 
-# ==================== SETUP ====================
-def GetNumPlayers():
-    num_players = int(input("How many people are playing RISK today?\n"))
-    while num_players < 1 or num_players > 6:
-         num_players = int(input("How many people are playing RISK today?\n"))
+def check_if_past_100():
+    ###
+    pass
+
+def check_for_special_tile(player_position, ladders, snakes):
+    if player_position in ladders:
+        new_position = ladders[player_position]
+        print(f"You landed on a ladder! Climb up from {player_position} to {new_position}")
+        return new_position
+
+    elif player_position in snakes:
+        new_position = snakes[player_position]
+        print(f"Oh no! You landed on a snake! Slide down from {player_position} to {new_position}")
+        return new_position
+
+    else:
+        return player_position
     
-    return num_players
 
-def FetchPlayerNames(num_players):
-    return [input(f"Player {i+1} name: ") for i in range(num_players)]
 
-def GetPlayersColors(player_names):
-    colors = []
-    for name in player_names:
-        color = input(f"{name}, choose your color (red/green/blue/yellow/cyan/magenta/white): ").lower()
-        colors.append(color)
-    return colors
+def take_turn(current_player_index, player_positions, ladders, snakes, final_square, board, width):
 
-def ClaimProvince(players, province_objects):
-    """Randomly assign provinces to players"""
-    import random
-    random.shuffle(PROVINCES)
-    
-    num_players = len(players)
-    provinces_per_player = len(PROVINCES) // num_players
-    extra = len(PROVINCES) % num_players
-    
-    idx = 0
-    print("\n=== Randomly Assigning Provinces ===\n")
-    
-    for i, player in enumerate(players):
-        num_to_give = provinces_per_player + (1 if i < extra else 0)
-        for _ in range(num_to_give):
-            if idx < len(PROVINCES):
-                prov_name = PROVINCES[idx]
-                prov = next((p for p in province_objects if p.name == prov_name), None)
-                if prov:
-                    prov.owner = player
-                    player.provinces.append(prov)
-                    print(f"{prov.name} assigned to {player.name}")
-                idx += 1
+    show_loading_message("Displaying board now...", 4)
 
-# ==================== ACTIONS ====================
-def is_adjacent(prov1, prov2):
-    """Improved adjacency check"""
-    if not prov1 or not prov2:
+    clear_terminal()
+    display_board_with_players(board, player_positions, player_colours, width)
+    print()
+    display_player_positions(player_positions)
+    print()
+    print(f"Player {current_player_index + 1}'s turn")
+
+
+
+    dice_role = input("Press Enter to roll the dice, or H for help: ")
+
+    if dice_role.upper() == "H":
+        display_help()
+        input("Press Enter to roll the dice...")
+
+
+
+
+    dice_roll = roll_dice()
+    print(f"Player {current_player_index + 1} rolled a {dice_roll}")
+
+    time.sleep(2)
+
+    starting_position = player_positions[current_player_index]
+    new_position = starting_position + dice_roll
+
+    if new_position > final_square:
+        print(f"Player {current_player_index + 1} needs an exact roll to finish.")
+        time.sleep(2)
         return False
-    p1 = prov1.strip().lower()
-    p2 = prov2.strip().lower()
+
+    player_positions[current_player_index] = new_position
+
+    checked_position = check_for_special_tile(new_position, ladders, snakes)
+    player_positions[current_player_index] = checked_position
+
+    reset_other_players(current_player_index, player_positions)
+
+    print(f"Player {current_player_index + 1} is now on square {player_positions[current_player_index]}")
+
+    time.sleep(3)
     
-    for name, neighbors in ADJACENCY.items():
-        if name.lower() == p1 and any(n.lower() == p2 for n in neighbors):
-            return True
-        if name.lower() == p2 and any(n.lower() == p1 for n in neighbors):
-            return True
+    if player_positions[current_player_index] == final_square:
+        print(f"Player {current_player_index + 1} wins!")
+        print("GAME OVER")
+        return True
+    
+    if dice_roll == 6:
+        print(f"Player {current_player_index + 1} rolled a 6 and gets another turn!")
+        time.sleep(2)
+        return take_turn(current_player_index, player_positions, ladders, snakes, final_square, board, width)
+
     return False
 
-def LaunchAttack(current_player, province_objects):
-    print("\n=== Launching Attack ===")
-    DisplayTroopStatus(province_objects)  # Show current status
+def num_of_players():
+    player_num_not_valid = True
+    player_num=0
+    while player_num_not_valid == True:
+        player_num = get_valid_int("How many players will be playing? ")
+        if player_num < 9 and player_num>1:
+            player_num_not_valid = False
+        else:
+            print("Invalid Player number. There is a maximum of 8 players and a minimum of 2")
+    return player_num
+
+player_colours = []
+
+def select_player_colours(player_num):
+    for i in range(player_num):
+        notvalid = True
+        while notvalid == True:
+            colour = input(f"Player {i+1}, Which colour would you like to choose? ").upper()
+            if colour in VALID_colours:
+                if eval(colour) in player_colours:
+                    print(f"{colour} has already been chosen. Please choose another colour.")
+                else:
+                    player_colours.append(eval(colour))
+                    print(eval(colour), f"Success! You chose {colour}", Style.RESET_ALL)
+                    notvalid = False
+            else:
+                print(f"{colour} is not a valid colour, the options are {VALID_colours}.")
+
+def create_board():
+    width = 0
+    height = 0
+    while 2 >= width or width > 11:
+        width = get_valid_int("What would you like the width of the board to be? ")
+    while 2 >= height or height > 11:
+        height = get_valid_int("What would you like the height of the board to be? ")
+    board = []
+    current_square_num = 1
+    for i in range(height):
+        row = []
+        for j in range(width):
+            row.append(current_square_num)
+            current_square_num += 1
+        board.append(row)
     
-    from_prov = input("Attack from which province? ").strip()
-    to_prov = input("Attack which province? ").strip()
-    
-    if not from_prov or not to_prov:
-        print("Please enter province names.")
-        return
-    
-    # Find attacking province (must be owned by current player)
-    from_p = next((p for p in province_objects 
-                   if p.name.lower() == from_prov.lower() 
-                   and p.owner == current_player), None)
-    
-    # Find target province
-    to_p = next((p for p in province_objects 
-                 if p.name.lower() == to_prov.lower()), None)
-    
-    if not from_p:
-        print(f"You do not own '{from_prov}' or it doesn't exist.")
-        return
-    if not to_p:
-        print(f"Province '{to_prov}' not found.")
-        return
-    if not to_p.owner or to_p.owner == current_player:
-        print("You cannot attack your own or neutral province.")
-        return
-    if not is_adjacent(from_prov, to_prov):
-        print(f"'{from_prov}' and '{to_prov}' are not adjacent!")
-        print("Tip: Check the ADJACENCY dictionary or try different provinces.")
-        return
-    
-    # Combat
-    attack_roll = random.randint(1,6) + random.randint(1,6)
-    defend_roll = random.randint(1,6) + random.randint(1,6)
-    print(f"Attack roll: {attack_roll}  |  Defense roll: {defend_roll}")
-    
-    if attack_roll > defend_roll:
-        print(f"\nVICTORY! {to_prov} captured!")
-        # Transfer ownership
-        old_owner = to_p.owner
-        to_p.owner = current_player
-        current_player.provinces.append(to_p)
-        if old_owner and to_p in old_owner.provinces:
-            old_owner.provinces.remove(to_p)
+    return board, width, height
+
+def display_board(board):
+    for row in board:
+        formatted_row = [str(cell).center(10) for cell in row]
+        print("| " + " | ".join(formatted_row) + " |")
+
+def display_player_positions(player_positions):
+    for i in range(len(player_positions)):
+        print(f"Player {i + 1}: square {player_positions[i]}")
+
+def game_setup():
+    print()
+    print()
+    print("WELCOME TO SNAKES AND LADDERS!")
+    print("Press H before rolling the dice if you need help.")
+    print()
+    board, width, height = create_board()
+    final_square = width * height
+    player_num = num_of_players()
+    select_player_colours(player_num)
+
+    player_positions = [1] * player_num
+
+    ladders = set_ladder_map(width, height, board)
+    snakes = set_snake_map(width, height, board)
+
+
+    current_player_index = 0
+    game_over = False
+
+    while game_over == False:
+        game_over = take_turn(current_player_index, player_positions, ladders, snakes, final_square, board, width)
+
+        if game_over == False:
+            current_player_index = (current_player_index + 1) % player_num
+
+
+def display_board_with_players(board, player_positions, player_colours, width):
+    display_board_copy = []
+
+    for row in board:
+        display_board_copy.append(row.copy())
+
+    for i in range(len(player_positions)):
+        position = player_positions[i]
+
+        row = (position - 1) // width
+        col = (position - 1) % width
+
+        player_display = player_colours[i] + PLAYER_DOT.center(10) + Style.RESET_ALL
+        display_board_copy[row][col] = player_display
+
+    display_board(display_board_copy)
+
+def set_ladder_map(width, height, board):
+    board_area = width * height
+    ladder_num = 0
+    if 0 < board_area <= 20:
+        ladder_num += 1
+    elif 20 < board_area <=50:
+        ladder_num += 2
+    elif 50 < board_area <=100:
+        ladder_num += 4
     else:
-        print("Attack failed.")
+        ladder_num += 7
+    ladders = {}
+    
+    for i in range (ladder_num):
+        placed = False
+        while placed == False:
 
-def RecruitSoldiers():
-    print("Recruiting...")
-    r1, r2 = random.randint(1,6), random.randint(1,6)
-    print(f"Rolls: {r1} {r2}")
-    if (r1 + r2) % 2 == 0:
-        print("Extra troops recruited!")
+            ladder_start = randint(1, board_area - 2) 
+            ladder_end = randint(ladder_start + 1, board_area - 1)
+            
+            if ladder_start not in ladders and ladder_end not in ladders.values():
+                ladders[ladder_start] = ladder_end
+                row_s = (ladder_start - 1) // width
+                col_s = (ladder_start - 1) % width
+                row_e = (ladder_end - 1) // width
+                col_e = (ladder_end - 1) % width
+                board[row_s][col_s] = f"L{i+1} Start" 
+                board[row_e][col_e] = f"L{i+1} End"
+                placed = True
+    return ladders
 
-# ==================== MAIN ====================
-def main():
-    load_soldiers()
-    load_title()
-    
-    num_players = GetNumPlayers()
-    player_names = FetchPlayerNames(num_players)
-    player_colors = GetPlayersColors(player_names)
-    
-    # Create Player objects with colors
-    players = [Player(name, color) for name, color in zip(player_names, player_colors)]
-    
-    # Create Province objects
-    province_objects = [Province(name) for name in PROVINCES]
-    
-    # Randomly assign provinces
-    ClaimProvince(players, province_objects)
-    
-    print("\n=== GAME START ===")
-    turn = 0
-    while True:
-        current = players[turn % len(players)]
-        print(f"\n{current.name}'s Turn!")
-        DisplayMap()
-        DisplayTroopStatus(province_objects)
-        
-        action = input("Action (A=Attack, R=Recruit, Q=Quit): ").upper()
-        if action == "A":
-            LaunchAttack(current, province_objects)
-        elif action == "R":
-            RecruitSoldiers()
-        elif action == "Q":
-            break
-        turn += 1
+def set_snake_map(width, height, board):
+    board_area = width * height
+    snake_num = 0
+    if 0 < board_area <= 20:
+        snake_num += 1
+    elif 20 < board_area <=50:
+        snake_num += 2
+    elif 50 < board_area <=100:
+        snake_num += 4
+    else:
+        snake_num += 7
+    snakes = {}
 
-if __name__ == "__main__":
-    main()
+    for i in range (snake_num):
+        placed = False
+        while placed == False:
+            snake_end = randint(1, board_area - 2) 
+            snake_start = randint(snake_end + 1, board_area - 1)
+
+            row_s = (snake_start - 1) // width
+            col_s = (snake_start - 1) % width
+            row_e = (snake_end - 1) // width
+            col_e = (snake_end - 1) % width
+
+            if snake_start not in snakes and snake_end not in snakes.values() and board[row_s][col_s] == snake_start and board[row_e][col_e] == snake_end:
+                snakes[snake_start] = snake_end
+                board[row_s][col_s] = f"S{i+1} Start" 
+                board[row_e][col_e] = f"S{i+1} End"
+                placed = True
+    return snakes
+    
+
+
+game_setup()
