@@ -1,320 +1,236 @@
-import random
-from random import randint
-import colorama
+## Personal Programming Project - Vicky. 
 
-from colorama import init, Fore, Back, Style
-colorama.init()
-import os
-import time
+import random 
+from collections import Counter
 
-BLUE = Fore.BLUE
-YELLOW = Fore.YELLOW
-GREEN = Fore.GREEN
-CYAN = Fore.CYAN
-WHITE = Fore.WHITE
-RED = Fore.RED
-MAGENTA = Fore.MAGENTA
-BLACK = Fore.BLACK
-PLAYER_DOT = "●"
+starting = True
+turn_count = 0
+current_combo_type = None
 
-VALID_colours = ["BLUE", "YELLOW", "GREEN", "CYAN", "WHITE", "RED", "MAGENTA", "BLACK"]
+# Fixed card decks
+all_cards = ['🂱', '🂲', '🂳', '🂴', '🂵', '🂶', '🂷', '🂸', '🂹', '🂺', '🂻', '🂼', '🂽', '🂾', 
+             '🂡', '🂢', '🂣', '🂤', '🂥', '🂦', '🂧', '🂨', '🂩', '🂪', '🂫', '🂬', '🂭', '🂮',
+             '🃁', '🃂', '🃃', '🃄', '🃅', '🃆', '🃇', '🃈', '🃉', '🃊', '🃋', '🃌', '🃍', '🃎',
+             '🃑', '🃒', '🃓', '🃔', '🃕', '🃖', '🃗', '🃘', '🃙', '🃚', '🃛', '🃜', '🃝', '🃞',
+             '🃏', '🃟']
 
+all_card_names = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'h7', 'h8', 'h9', 'h10', 'hJ', 'hQ', 'hK',
+                  's1', 's2', 's3', 's4', 's5', 's6', 's7', 's8', 's9', 's10', 'sJ', 'sQ', 'sK',
+                  'd1', 'd2', 'd3', 'd4', 'd5', 'd6', 'd7', 'd8', 'd9', 'd10', 'dJ', 'dQ', 'dK',
+                  'c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9', 'c10', 'cJ', 'cQ', 'cK',
+                  'BJ', 'RJ']
 
+# Rank map
+rank_map = {'3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14, '2': 15, 'BJ': 16, 'RJ':17}
 
-def clear_terminal():
-    os.system("cls" if os.name == "nt" else "clear")
+#combined deck
+full_deck = list(zip(all_cards, all_card_names))
 
-def show_loading_message(message, seconds):
-    clear_terminal()
-    print(message)
-    time.sleep(seconds)
-
-def get_valid_int(question):
-    valid = False
-    number = 0
-
-    while valid == False:
-        try:
-            number = int(input(question))
-            valid = True
-        except ValueError:
-            print("Please enter a whole number.")
-
-    return number
-
-def display_help():
-    print("SNAKES AND LADDERS RULES")
-    print("Each player starts on square 1.")
-    print("Players take turns rolling the dice.")
-    print("Move forward by the number rolled.")
-    print("Ladders move you up the board.")
-    print("Snakes move you down the board.")
-    print("If you land on another player, they go back to square 1.")
-    print("You must roll the exact number to reach the final square.")
-    print("The first player to reach the final square wins.")
-    print()
-    print("Board labels:")
-    print("L1 Start = the start of ladder 1")
-    print("L1 End = the end of ladder 1")
-    print("S1 Start = the start of snake 1")
-    print("S1 End = the end of snake 1")
-    print()
-
-
-
-def reset_other_players(current_player_index, player_positions):
-    current_position = player_positions[current_player_index]
-    for i in range(len(player_positions)):
-        if i != current_player_index:
-            if player_positions[i] == current_position:
-                print(f"Player {current_player_index + 1} landed on Player {i + 1}!")
-                print(f"Player {i + 1} has been sent back to square 1.")
-                player_positions[i] = 1
-
-
-def roll_dice():
-
-    return randint(1, 6)
-
-def check_if_past_100():
-    ###
-    pass
-
-def check_for_special_tile(player_position, ladders, snakes):
-    if player_position in ladders:
-        new_position = ladders[player_position]
-        print(f"You landed on a ladder! Climb up from {player_position} to {new_position}")
-        return new_position
-
-    elif player_position in snakes:
-        new_position = snakes[player_position]
-        print(f"Oh no! You landed on a snake! Slide down from {player_position} to {new_position}")
-        return new_position
-
-    else:
-        return player_position
+#prints rules
+def intro():
+    print('''Bot: Hello! Welcome to DouDiZhu aka Landlord
+Bot: These are the rules:''')
+    print('''RULES:
+3 people a game
+Whoever gets the flipped card is the landlord
+The landlord gets 3 extra cards that is shown to everyone
+Card value in ascending: 3 4 5 6 7 8 9 10 J Q K A 2 BJ RJ
+Card combinations: 
+Rocket: BJ and RJ, it is the largest combination
+Solo chain: number sequence in ascending order (must at least be 5 cards)
+Solo: any solo card
+Pairs: a pair of the same number
+Bomb: a quad of the same number (the value of each bomb depends on the card value)
+Trio with single card : a triad of the same number plus a singular card (the value of the 3+1 depends on the triad)
+Trio with pair: a triad of the same number plus a pair (the value of the 3+2 depends on the triad)
+Pairs chain: at least three consecutive pairs
+Airplane: at least two consecutive trios
+Airplane with small wings: at least two consecutive trio and the same number of solo cards
+Air plane with large wings: at least two consecutive trios and the same number of pairs
+Four with two: four of the same card and two solos
+Four with a pair: four of the same card and a pair
+''')
     
-
-
-def take_turn(current_player_index, player_positions, ladders, snakes, final_square, board, width):
-
-    show_loading_message("Displaying board now...", 4)
-
-    clear_terminal()
-    display_board_with_players(board, player_positions, player_colours, width)
-    print()
-    display_player_positions(player_positions)
-    print()
-    print(f"Player {current_player_index + 1}'s turn")
-
-
-
-    dice_role = input("Press Enter to roll the dice, or H for help: ")
-
-    if dice_role.upper() == "H":
-        display_help()
-        input("Press Enter to roll the dice...")
-
-
-
-
-    dice_roll = roll_dice()
-    print(f"Player {current_player_index + 1} rolled a {dice_roll}")
-
-    time.sleep(2)
-
-    starting_position = player_positions[current_player_index]
-    new_position = starting_position + dice_roll
-
-    if new_position > final_square:
-        print(f"Player {current_player_index + 1} needs an exact roll to finish.")
-        time.sleep(2)
+    start_game = int(input("Type 1 to [Continue] \n "))
+    if start_game == 1:
+        return True
+    else:
+        print("Guess I'll see you next time!")
         return False
 
-    player_positions[current_player_index] = new_position
-
-    checked_position = check_for_special_tile(new_position, ladders, snakes)
-    player_positions[current_player_index] = checked_position
-
-    reset_other_players(current_player_index, player_positions)
-
-    print(f"Player {current_player_index + 1} is now on square {player_positions[current_player_index]}")
-
-    time.sleep(3)
+# the landlord card that the landlord receives
+def landlord_cards():
+    # copy of the full deck 
+    deck = full_deck.copy()
+    random.shuffle(deck)
     
-    if player_positions[current_player_index] == final_square:
-        print(f"Player {current_player_index + 1} wins!")
-        print("GAME OVER")
-        return True
+    # Pick landlord card
+    landlord_card = deck[random.randint(0, len(deck)-1)]
+    print("Bot: The flipped card is:", landlord_card)
+    print("Bot: I will shuffle the cards now...")
     
-    if dice_roll == 6:
-        print(f"Player {current_player_index + 1} rolled a 6 and gets another turn!")
-        time.sleep(2)
-        return take_turn(current_player_index, player_positions, ladders, snakes, final_square, board, width)
-
-    return False
-
-def num_of_players():
-    player_num_not_valid = True
-    player_num=0
-    while player_num_not_valid == True:
-        player_num = get_valid_int("How many players will be playing? ")
-        if player_num < 9 and player_num>1:
-            player_num_not_valid = False
+    # Deal cards - 17 cards each, leave 3 for landlord
+    player_cards = deck[0:17]
+    bot1_cards = deck[17:34]
+    bot2_cards = deck[34:51]
+    landlord_extra_cards = deck[51:54]
+    
+    print("Bot: The landlord will receive 3 extra cards")
+    
+    # Show the actual player's cards
+    print("Bot: These are Player 1's cards!")
+    show_cards_left(player_cards)
+    
+    # Seeing who is the landlord
+    if landlord_card in player_cards:
+        landlord_choice = 1
+    elif landlord_card in bot1_cards:
+        landlord_choice = 2
+    else:
+        landlord_choice = 3
+    
+    # Asking if the player wants to be the landlord
+    if landlord_choice == 1:
+        landlord = int(input("Bot: Player {} is the landlord! Do you want to be the landlord? Click 1 if yes. ".format(landlord_choice)))
+        
+        if landlord == 1:
+            print("Player {} is the Landlord! The rest of the players are civilians!".format(landlord_choice))
+            # Give extra cards to player
+            player_cards.extend(landlord_extra_cards)
         else:
-            print("Invalid Player number. There is a maximum of 8 players and a minimum of 2")
-    return player_num
-
-player_colours = []
-
-def select_player_colours(player_num):
-    for i in range(player_num):
-        notvalid = True
-        while notvalid == True:
-            colour = input(f"Player {i+1}, Which colour would you like to choose? ").upper()
-            if colour in VALID_colours:
-                if eval(colour) in player_colours:
-                    print(f"{colour} has already been chosen. Please choose another colour.")
-                else:
-                    player_colours.append(eval(colour))
-                    print(eval(colour), f"Success! You chose {colour}", Style.RESET_ALL)
-                    notvalid = False
+            print("Repicking...")
+            landlord_choice = random.randint(1,3)
+            print("New landlord is Player {}".format(landlord_choice))
+            # Give extra cards to new landlord
+            if landlord_choice == 1:
+                player_cards.extend(landlord_extra_cards)
+            elif landlord_choice == 2:
+                bot1_cards.extend(landlord_extra_cards)
             else:
-                print(f"{colour} is not a valid colour, the options are {VALID_colours}.")
-
-def create_board():
-    width = 0
-    height = 0
-    while 2 >= width or width > 11:
-        width = get_valid_int("What would you like the width of the board to be? ")
-    while 2 >= height or height > 11:
-        height = get_valid_int("What would you like the height of the board to be? ")
-    board = []
-    current_square_num = 1
-    for i in range(height):
-        row = []
-        for j in range(width):
-            row.append(current_square_num)
-            current_square_num += 1
-        board.append(row)
+                bot2_cards.extend(landlord_extra_cards)
+                
+    # If the landlord is one of the bots
+    elif landlord_choice == 2 or landlord_choice == 3:
+        print("Bot: Player {} is the landlord!".format(landlord_choice))
+        yes_or_no = random.randint(1,2)
+        if yes_or_no != 1:
+            print("Repicking...")
+            landlord_choice = random.randint(1,3)
+            print("New landlord is Player {}".format(landlord_choice))
+        else:
+            print("Player {} is the Landlord! The rest of the players are civilians!".format(landlord_choice))
+        
+        # Give extra cards to landlord
+        if landlord_choice == 1:
+            player_cards.extend(landlord_extra_cards)
+        elif landlord_choice == 2:
+            bot1_cards.extend(landlord_extra_cards)
+        else:
+            bot2_cards.extend(landlord_extra_cards)
     
-    return board, width, height
-
-def display_board(board):
-    for row in board:
-        formatted_row = [str(cell).center(10) for cell in row]
-        print("| " + " | ".join(formatted_row) + " |")
-
-def display_player_positions(player_positions):
-    for i in range(len(player_positions)):
-        print(f"Player {i + 1}: square {player_positions[i]}")
-
-def game_setup():
+    # Show the landlord cards
+    print("Bot: These are the landlord cards!")
+    for card in landlord_extra_cards:
+        print(card)
+    
+    return player_cards, bot1_cards, bot2_cards, landlord_choice
+#joker
+def get_rank(card):
+    name = card[1]
+    if name in ('BJ','RJ'):
+        return rank_map[name]
+    rank_part = name[1:]
+    if rank_part in rank_map:
+        return int(rank_map[rank_part])
+    if rank_part == '1':  
+        return rank_map['A']
+    raise ValueError(f"Unknown rank part: {rank_part} from card name {name}")
+        
+# Show cards
+def show_cards_left(player_cards):  
+    sorted_hand = sorted(player_cards, key=get_rank)
+    print("Your cards: ", end="")
+    for i, card in enumerate(sorted_hand):
+        print(f"{i+1}:{card[0]}:{card[1]} ", end="")
     print()
-    print()
-    print("WELCOME TO SNAKES AND LADDERS!")
-    print("Press H before rolling the dice if you need help.")
-    print()
-    board, width, height = create_board()
-    final_square = width * height
-    player_num = num_of_players()
-    select_player_colours(player_num)
+    print(f"You currently have: {len(player_cards)} cards")
+    return sorted_hand
 
-    player_positions = [1] * player_num
-
-    ladders = set_ladder_map(width, height, board)
-    snakes = set_snake_map(width, height, board)
-
-
-    current_player_index = 0
-    game_over = False
-
-    while game_over == False:
-        game_over = take_turn(current_player_index, player_positions, ladders, snakes, final_square, board, width)
-
-        if game_over == False:
-            current_player_index = (current_player_index + 1) % player_num
-
-
-def display_board_with_players(board, player_positions, player_colours, width):
-    display_board_copy = []
-
-    for row in board:
-        display_board_copy.append(row.copy())
-
-    for i in range(len(player_positions)):
-        position = player_positions[i]
-
-        row = (position - 1) // width
-        col = (position - 1) % width
-
-        player_display = player_colours[i] + PLAYER_DOT.center(10) + Style.RESET_ALL
-        display_board_copy[row][col] = player_display
-
-    display_board(display_board_copy)
-
-def set_ladder_map(width, height, board):
-    board_area = width * height
-    ladder_num = 0
-    if 0 < board_area <= 20:
-        ladder_num += 1
-    elif 20 < board_area <=50:
-        ladder_num += 2
-    elif 50 < board_area <=100:
-        ladder_num += 4
+# Check if landlord is player
+def check_landlord_is_player(landlord_choice):
+    if landlord_choice == 1:
+        player_identity = 1
     else:
-        ladder_num += 7
-    ladders = {}
-    
-    for i in range (ladder_num):
-        placed = False
-        while placed == False:
+        player_identity = 2
+    return player_identity
 
-            ladder_start = randint(1, board_area - 2) 
-            ladder_end = randint(ladder_start + 1, board_area - 1)
-            
-            if ladder_start not in ladders and ladder_end not in ladders.values():
-                ladders[ladder_start] = ladder_end
-                row_s = (ladder_start - 1) // width
-                col_s = (ladder_start - 1) % width
-                row_e = (ladder_end - 1) // width
-                col_e = (ladder_end - 1) % width
-                board[row_s][col_s] = f"L{i+1} Start" 
-                board[row_e][col_e] = f"L{i+1} End"
-                placed = True
-    return ladders
 
-def set_snake_map(width, height, board):
-    board_area = width * height
-    snake_num = 0
-    if 0 < board_area <= 20:
-        snake_num += 1
-    elif 20 < board_area <=50:
-        snake_num += 2
-    elif 50 < board_area <=100:
-        snake_num += 4
+def check_combination(cards_played):
+    if not cards_played:
+        return "Pass"
+        
+    values = []
+    for card in cards_played:
+        name = card[1]
+        if name == 'BJ':
+            values.append(16)
+        elif name == 'RJ':
+            values.append(17)
+        else:
+            rank_part = name[1:]
+            values.append(rank_map[rank_part])
+        
+    value_counts = Counter(values)
+    num_cards = len(cards_played)
+        
+    # Rocket (BJ + RJ)
+    if set(values) == {16, 17}:
+        return "Rocket"
+        
+    # Solo
+    if num_cards == 1:
+        return "Solo"
+        
+    # Pair
+    if num_cards == 2 and max(value_counts.values()) == 2:
+        return "Pair"
+        
+    # Bomb
+    if num_cards == 4 and max(value_counts.values()) == 4:
+        return "Bomb"
+        
+    # Trio with single
+    if num_cards == 4 and max(value_counts.values()) == 3:
+        return "Trio with single card"
+        
+    # Trio with pair
+    if num_cards == 5 and sorted(value_counts.values()) == [2, 3]:
+        return "Trio with pair"
+        
+    #placeholder
+    #return current_combo_type
+    return "Unknown"
+
+def landlord_play(player_identity, player_cards, bot1_cards, bot2_cards):
+    if player_identity == 1:
+        show_cards_left(player_cards)
+        play_combination(turn_count,player_cards,current_combo_type)
+        # Add later 
+
+def play_combination(turn_count, cards, current_combo_type):
+    if turn_count%3 == 0:
+        cards_played = input("*Please play a combination*\n")
+        print("You have played:", cards_played)
+
     else:
-        snake_num += 7
-    snakes = {}
+        cards_played = input(f"Please play cards that follow the {current_combo_type} combination\n")
+    # Add later
+    pass
 
-    for i in range (snake_num):
-        placed = False
-        while placed == False:
-            snake_end = randint(1, board_area - 2) 
-            snake_start = randint(snake_end + 1, board_area - 1)
+#---- start of game ---
+starting = intro()
 
-            row_s = (snake_start - 1) // width
-            col_s = (snake_start - 1) % width
-            row_e = (snake_end - 1) // width
-            col_e = (snake_end - 1) % width
-
-            if snake_start not in snakes and snake_end not in snakes.values() and board[row_s][col_s] == snake_start and board[row_e][col_e] == snake_end:
-                snakes[snake_start] = snake_end
-                board[row_s][col_s] = f"S{i+1} Start" 
-                board[row_e][col_e] = f"S{i+1} End"
-                placed = True
-    return snakes
-    
-
-
-game_setup()
+if starting:
+    print("You are Player 1!!!")
+    player_cards, bot1_cards, bot2_cards, landlord_choice = landlord_cards()
+    player_identity = check_landlord_is_player(landlord_choice)
