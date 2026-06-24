@@ -1,6 +1,6 @@
 import random
 from random import randint
-import colorama
+
 from colorama import init, Fore, Back, Style
 colorama.init()
 import os
