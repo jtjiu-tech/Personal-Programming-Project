@@ -1,652 +1,427 @@
-## Personal Programming Project John Tjiu
-import time
-from colorist import rgb, ColorRGB
 import random
-from time import sleep
-import os
-import pygame
 
-#useful functions
-def betterprint(text):
-    for character in text:
-        print(character, end = "",flush = True,)
-        sleep(0.02)
+global player_names, player_colors
 
-def setupMusic():
-    pygame.mixer.init()
+# ANSI Colors 
+class BgColor:
+    CYAN = "\033[46m"  
+    OFF = "\033[0m"     # Reset color
 
-def clear():
-    os.system('cls' if os.name == 'nt' else 'clear')
+COLOR_AVAILABLE = True
 
-#Colours
-def color_text(text, r, g, b):
-    return f"{ColorRGB(r, g, b)}{text}{ColorRGB(255, 255, 255)}"
+class Colors:
+    RESET = "\033[0m"
+    CYAN = "\033[46m"      # Background cyan
+    RED = "\033[41m"       # Background red
+    GREEN = "\033[42m"     # Background green
+    YELLOW = "\033[43m"    # Background yellow
+    BLUE = "\033[44m"      # Background blue
+    MAGENTA = "\033[45m"   # Background magenta
+    WHITE = "\033[47m"     # Background white
 
-def gold(text):
-    return color_text(text, 255, 204, 0)
+# Map player color names to ANSI codes
+COLOR_MAP = {
+    "red": Colors.RED,
+    "green": Colors.GREEN,
+    "blue": Colors.BLUE,
+    "yellow": Colors.YELLOW,
+    "cyan": Colors.CYAN,
+    "magenta": Colors.MAGENTA,
+    "white": Colors.WHITE,
+    "default": Colors.CYAN
+}
 
-def red(text):
-    return color_text(text, 255, 0, 0)
+try:
+    from playsound import playsound
+    SOUND_AVAILABLE = True
+except ImportError:
+    SOUND_AVAILABLE = False
 
-def green(text):
-    return color_text(text, 0, 255, 0)
+PROVINCES = [
+    "Alaska", "Columbia", "Northwestern Territories", "Prairies", "Hudsonia", "Upper Canada",
+    "Northern Quebec", "Lower Canada", "Newfoundland", "Greenland", "Southeastern United States",
+    "Midwest", "Great Plains", "Rocky Mountains", "Pacific Coast", "Atlantic Coast", "Mexico",
+    "Central America", "Colombia", "Guyana", "Peru", "Amazonia", "Brazil", "Argentina", "Carribean",
+    "Iceland", "Jan Martin", "Macronesia", "Iberia", "Normandy", "Occitania", "Benelux",
+    "Switzerland", "Western Germany", "Eastern Germany", "Northern Italy", "Southern Italy",
+    "Greater Austria", "Poland", "Hungary", "The Balkans", "Romania", "Ruthenia", "The Baltics",
+    "Scandinavia", "Anatolia", "The Causases", "Muscovy", "Astrabhan", "Novogrod", "Eastern Muscovy",
+    "Urals", "Western Siberia", "Central Siberia", "Eastern Siberia", "Central Asia", "Mongolia",
+    "Manchuria", "Xinjiang", "Shanxi", "China", "Tibet", "Korea", "Japan", "Taiwan", "Indochina",
+    "Burma", "Eastern India", "Southern India", "Rajputana", "Pakistan", "Central India", "Himalayas",
+    "Andaman and Nicobar", "Maldives", "Lanka", "Phillipenes", "Malaysia", "Sumatra", "Borneo",
+    "Celebes", "New Guinea", "Western Australia", "Northern Territory", "South Australia",
+    "Queensland", "New South Wales", "Victoria and Tasmania", "New Zeeland", "Micronesia", "Fiji",
+    "Maghreb", "Western Sahara", "West Africa", "Nigeria", "Equatorial Africa", "Central Africa",
+    "South Africa", "Rhodesia", "Mozambique", "Madagascar", "East Africa", "Ethiopia", "Somalia",
+    "Somalialand"
+]
 
-def cyan(text):
-    return color_text(text, 0, 255, 255)
+# Basic Adjacency Logic (RISK-style connections)
+ADJACENCY = {
+    "Alaska": ["Northwestern Territories", "Pacific Coast", "Columbia"],
+    "Columbia": ["Alaska", "Northwestern Territories", "Pacific Coast"],
+    "Northwestern Territories": ["Alaska", "Columbia", "Prairies", "Hudsonia"],
+    "Prairies": ["Northwestern Territories", "Great Plains", "Hudsonia"],
+    "Hudsonia": ["Northwestern Territories", "Prairies", "Upper Canada"],
+    "Upper Canada": ["Hudsonia", "Northern Quebec", "Lower Canada"],
+    "Northern Quebec": ["Upper Canada", "Lower Canada", "Newfoundland"],
+    "Lower Canada": ["Upper Canada", "Northern Quebec", "Atlantic Coast"],
+    "Newfoundland": ["Northern Quebec", "Greenland"],
+    "Greenland": ["Newfoundland", "Iceland"],
+    "Iceland": ["Greenland", "Scandinavia"],
+    "Southeastern United States": ["Atlantic Coast", "Midwest", "Carribean"],
+    "Midwest": ["Southeastern United States", "Great Plains"],
+    "Great Plains": ["Prairies", "Midwest", "Rocky Mountains"],
+    "Rocky Mountains": ["Great Plains", "Pacific Coast"],
+    "Pacific Coast": ["Alaska", "Columbia", "Rocky Mountains", "Mexico"],
+    "Atlantic Coast": ["Lower Canada", "Southeastern United States"],
+    "Mexico": ["Pacific Coast", "Central America", "Carribean"],
+    "Central America": ["Mexico", "Colombia"],
+    "Colombia": ["Central America", "Guyana", "Peru"],
+    "Guyana": ["Colombia", "Brazil"],
+    "Peru": ["Colombia", "Amazonia", "Brazil"],
+    "Amazonia": ["Peru", "Brazil"],
+    "Brazil": ["Guyana", "Peru", "Amazonia", "Argentina"],
+    "Argentina": ["Brazil"],
+    "Carribean": ["Mexico", "Atlantic Coast"],
+    "Scandinavia": ["Iceland", "The Baltics"],
+    "The Baltics": ["Scandinavia", "Poland", "Muscovy"],
+    "Poland": ["The Baltics", "Eastern Germany", "Ruthenia"],
+    "Muscovy": ["The Baltics", "Novogrod", "Eastern Muscovy"],
+    "China": ["Mongolia", "Xinjiang", "Tibet", "Indochina", "Korea"],
+    "Japan": ["Korea"]
+}
 
-def magenta(text):
-    return color_text(text, 255, 0, 255)
-
-def blue(text):
-    return color_text(text, 0, 150, 255)
-
-def orange(text):
-    return color_text(text, 255, 165, 0)
-
-def pink(text):
-    return color_text(text, 255, 105, 180)
-
-def bright(text):
-    return color_text(text, 255, 255, 100)
-
-def dim(text):
-    return color_text(text, 150, 150, 150)
-
-
-def announce_look_away():
-    print("\n" + "="*50)
-    print("🔒 OTHER PLAYERS: PLEASE LOOK AWAY NOW! 🔒")
-    print("="*50)
-    for i in range(3, 0, -1):
-        print(f"👀 Looking away in {i}...")
-        sleep(1)
-    clear()
-
-def announce_players_can_look():
-    clear()
-    print("\n" + "="*50)
-    print("👁️ OTHER PLAYERS: YOU CAN LOOK BACK NOW! 👁️")
-    print("="*50)
-    sleep(3)
-    clear()
-
-def announce_private_action(current_player, action_name):
-    clear()
-    print("\n" + "🔒"*25)
-    print(f"🔒 {current_player.name} is using {action_name} - PRIVATE ACTION 🔒")
-    print("🔒"*25)
-    announce_look_away()
-
-def announce_public_action(player, action_name):
-    """Announce a public action that everyone can see"""
-    clear()
-    print("\n" + "⭐"*30)
-    print(f"⭐ {player.name} played {action_name}! ⭐")
-    print("⭐"*30)
-    sleep(1)
-
-
-
-
-# Definitions
-players = []
-
-
-#Capitalised all cat cards + definitions of cards
-DEFUSE = "🛡️•⩊•(defuse)"
-NOPE = "🚫(nope)"
-ATTACK = "⚔️(attack)"
-SHUFFLE = "🔀(shuffle)"
-SKIP = "🏃(skip)"
-FAVOR = "🖤(favor)"
-SEE = "👀(See the future)"
-KITTEN = "💣"
-
-CATS = ["🍉🐱", "🥔🐱", "🌈🐱"]
-
-#Way of defining players
 class Player:
-    def __init__(self,name):
+    def __init__(self, name, color):
         self.name = name
-        self.hand = []
-        self.alive = True
-        self.extra_turns = 0
-        self.has_played_attack = False
-        self.has_played_skip = False
+        self.color = color.lower() if color else "default"
+        self.ansi_color = COLOR_MAP.get(self.color, Colors.CYAN)
+        self.provinces = []
 
-    def show_hand(self):
-        i = 0
-        print(f"{self.name}, Here are your cards: ")
-        for i,item in enumerate(self.hand,1):
-            print(f"{i}. {item}")
+class Province:
+    def __init__(self, name):
+        self.name = name
+        self.owner = None
+        self.infantry = 2
+        self.tank = 1
+        self.commando = 0
 
-def select_target(current_player, players):
-    available = [p for p in players if p.alive and p != current_player]
-    # checks if the list is empty
-    if not available:
-        betterprint("No other players available!")
-        return None
-    betterprint("Choose a target player\n")
-    for i,player in enumerate(available):
-        print(f"{i+1} {player.name}")
+# ==================== DISPLAY ====================
+def load_soldiers():
+    print(BgColor.CYAN + """     ░         ▒▒░    ░▒░                                                                                                                                        
+    ░░        ▒▒░░  ░▒░░░                                                                                                                                        
+   ░░░░ ▒░    ░░░    ░                                                                                                                                           
+  ░▒▒▒▒░     ░░░░      ░░                                                                                                                                        
+  ░▒▓░     ░ ░░░░      ░░            ░░░░░░░░░░                                                                                                                  
+ ░░ ░░░   ░░░░░░░░░     ▒░         ░▒▒▒▓▒▒▓▓▒▒▒▒▒░                                                                                                               
+░░      ░  ░░░░ ░░░░░            ░▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒░                                                                                                              
+░░      ░  ░░░░░▒▒▒░░            ▒▓██████▓▓▓▓▒▒▒▒▒▒▒                                                                                                             
+░         ░░░░░░▒▒░░░           ▒▓▓███▓▓▓████████████▓                                                                                                           
+░        ░░░   ░▒▒░▒░           ▒▓█▓▓█████████████████▒                                                                                                          
+░ ░     ░░░░ ░ ░░░░▒░           ░▓▓███████████████████                                                                                                           
+        ░░░░░░░░░░░▒░            ▓████████▓▓▓█▓▓▓░▓██                                                                                                            
+       ▒░░░░░░░ ░░░░            ░████████▓▓▒▒▒▓▓▓▒░▓                                                                                                             
+      ▒▒░░░░░░░░░ ░░░░           ██████████▓▓▓▓██▓▒                                                                                                              
+░ ░░░▒▒▒░░░░░░░░░░░░▒░         ░▓█████████████▓▓▓▒                                                                                                               
+  ░░▒▒▒░░░░░░░░░░░░░░         ▓▓▒████████████▓▓▓▓░                                                                                                               
+░░░░▒▒▒░░░░▒░░░░░░░░░        ▒█▓█████████████████░                                                                                                               
+░░░▒▒▒▒▒▒▒▒▒░░░░░░░          ▓██████████████████▓░░░                                                                                                             
+░░▒▒▒▒▒▒▒▒▒▒░░░░░░░    ░▒▒▒▒▒▓██████████████████▓░▒▒▒▒                                                               ░░░░░░                                      
+████▓▓▓▓▓░▒▒░░░░░░░  ░░▒▒▒▒▓████████████████████▓▒▒▒▒▒▒▒▒░                                          ▒▓▓▓      ░▒▒▒░░░                                            
+███████▓▓▓▓▒░▒░░░░░░░▒▒▒▒▓▓████████████████████▓▓▒▒▓▓▓▓▓▓▓▒▒                                  ░▒▓▓▒▒▒▒▒▒░▒▒▒░░                                                   
+█▓▓▒▒▒▒▒▒▒▒▒▒░░░░▒░▒▒▒▓▓▓█████████████████████▓▓▒▓▓██████▓▓▒▒                         ░▒▒▓▓▒▓▒▒▒▒▒▓▓▓██▓                                                         
+▓▓▓▓▒▒▒▒▒▒▒░░░░░▒▒▒▓▓▓█████████▓███████▓█████▓▓▒▒▒▓▓██▓███▓▓▓▒                ░░▒▒▓███████▓▓░▓██▓▓▒                                                              
+▓▓▓▓▓▒▒▒▒▒▒▒░░░▒▒▓▓▓▓████▓▓▒▓▓▒▒▒▓▓▓▒▓▓██▓▓▓▓▓▒▒▒▓▓▓▓▓▓██▓▓▓▓▓▓▓       ░▒▒▓▓█████████▒░                                                                          
+▓▓▒▒▒▒▒▒▒▒░░░░▒▓▓▓▓████████▓▓▒▒▒▒▒░░░░░▒▒▒▒▓▓██▒▒▒▒▒▒▓████▓▓▓▒▓▓▒▒▒▒▒▒▓██████▓▒░                                                                                 
+▓▓▒▒▒▒▒▒▒▒░░░░▓██████████▓▓▓▒▒▒▒▒▒▒▒▒▒░▒▒▒▓▓▒░░▒░░░░░▒▓▒▒▓▓▓▓▒▒▓▒▓▓███▓█▓░                                          ▒▒░░░                                        
+▒▒▒▒▒▒▒▒▒▒░░▒▓███████████▓▒▒▒▒▒░░▒▒▒▒▒▒▒▒▒▒▒▒░░▒▒▒░▒▒▓▓▒▒▓██████████▓░█▓░                                      ▒██▓▓▓▓▓▓▒▓▓▒                                     
+▒▒▒▒▒▒▒▒▒▒▒▒▒█████▓▓█████▓▒▒▒░▒▒▒▒▒▒▒▒▒▒▒▒▒▒░░░░▒▒▒▒▒▓█▓▓▓▓███████   ▓█░             ▒▒▒▒▒▒▒▒                 ▓█████▓▓▓▓▓██▓▒                                    
+▓▓▓▒▒▒▒▒▒▒▒▒▓██▓▓▓▓███▓▓▓▓▒▒░▒▒▒▒▒▒▒▒░░░▒▒▒░░░░░░░░▒▒▒▒▓▓▓████████▒░▓▓            ▒▓▓▓▓▓▓▓▓▒▓▒▒▒             ▓██████████████▓▒                                   
+▓▒▒▒▒▒▒▒▒░▒▓█████████▓█▓▒▒▒▒▒▒▒▒▒▒░░▒░░▒▒░░░░ ░░░░░░▒▒▒▓▓▓██████▒░▓█▓           ░▓▓█▓▓▓▓▓▓▒▒▒▒▒▒▒░          ░▓▓████████▓▓▓▒▒▒▒░                                  
+▓▒▒▒▒▒▒▒▒▒▒███████████▓▓▓█▓▓▓▓▓▒▓▓▓▒▒▒▒░▒░░░░░░░░░░░░▒▒▒▒▓██████▓▓██░          ░▓▓███▓▓▓▓▓▒▒▒▒▒▒▒▒▒         ░▓█████▓▓▓▓▓███▓████░                                
+▓▓▒▒▒▒▒▒▒▒████████████▓███▓███▓▓▓▓▓▓▓▒▒▒▒▓▒▒▒░░░░░░░░░░▒▒▓█████████▒▒          ▓██▓███▓▓▒▒▒▒▒▓▓▓▓▓▒▒         ▓██▓▓█████████████                                  
+████▓▒▒▒▒▓█████████████████████▓▓▓▓▒▒█▓▒▒▒▒▒▒░░░░▒░░░░░▒▒█████████▓▓▒          ▓█████████████████████▒       ▒▓████████▓▓▓▓▓▒▓▓                                  
+█████▒▒▒▒███████████████▓██████▓▓███████▓██████▒░░▒░░░░░▒██████████▓▒          ▓██▓████████████▓▓████▒       ████████▓▒▓▒▒▓▓▒░                                   
+██████▓░   ░███████████████████████████████████▓▒░▓▒▒▒░░▒█████████▓▓░          ▓▓▓██████▓▓▓▓███▒████▓       ▒▓███████▓▓▓██▓█▒                                    
+▓▓█▒▒█▓    ▒█████████████████████▓▓████▓▓██████▓▒▒█▓▒▒░░▓█████████▓▓           ▒███████▓▒▒▒░▒▒▒▒▒▒█▒       ░▒▓███████████▓▒▒                                     
+▒▒▒▓▓▒     ▒▓▓███████████████████████░▒▓▓▓▓████▓▓▓███▒▒░▓████████▓▒            ███████▓▓▓▒▒▒▒▓██▓░     ▒▒▓▒▒▓▓████████████▒                                      
+▓▒▒▒▓▒▒    ▒▒▓█████████▓▓▓█▓████████▒▓▓▓▓███████▓▒█████████████▓▒░            ▒▓██████▓▒▓▒▒▒▒▒▒░░  ░░▒▒▓▒▒▓▓██████████████▒▒░▓█                                  
+▓▓▒▒▒▒▓▒░  ▒▓████▒████▓▒▒▒▒▒▒▒▓████▓████████████▓▒██████████▓▒▒▒▒             ▓█████████▓▓▒▒▒▒▓█▒ ░░▒▒▒▒▒▒▒▓████████████▒█▓▒▓▓▒▒▒                                
+▓▒▒▒▒▒▓▓▓▒ ░█▒    ░████▓▒░░░░▒▒▒▒▓▓█████████████▓▒█████████▓▓▓██▒░░          ▒▒▓▓███████████▓▒▒▒░ ░░▒▒▒▒▒▓▓▓██████████▒███▓▒▒▒▒▒▒▓░                              
+▓▓▓▓▓▓▒▒▒░         ▒█████▓▒▒▒░▓█████████████▓▓▓█▒▒█████████▓▓▓██▓░          ▓▓▒▒▒▒▓▓██████████▒   ░░▒▒▒▒▒▒▓█▓▓▓▒▒▒▓▓█▒████▓▒▒▒▓▒▓▓▒                              
+▒▒▓▓█▓▒▒▒▒          ▓█████████████████████████▓▓▓▓█████████▓▓██▓▓█▓        ░▒▓██▓▓▓▒▒▓█████████▒░░░░▒▒▒▒▓▓▓██▓██▓▓▒▒██████▓▓▓▓███▒▒▒░                            
+▒▒▒▒▒▒▓▓█▓▓░         ▒▓███████▓▓█████████▓██▓█▓▓▒▒▓█████████▓█████░       ▒░░░▒▒▓████▒░▒▓██████▒▒▒░▒░░░▒▓█▒▒▓▓█▒▒▒██▒▒▒▓████▓▓██▓▒▒░░░    ░░ ░░░░░░▒░     ░░▒▒▒▒▒
+▒▒▓▓▓▓▓█████▓▒         ▒▓████████▓▒▓▓▓▓▓██▓▓▒▓▒▒░▓███▓▓▒▓▓▓▓████▓▒     ░▒▒░░░░░▒▒▒▒███▓▒░▒▓▓▓██▒░░░▓▓▒▒▒▒▒▓█▓█▓▓▓███▓▓▓▒▓██▓░  ░▓▓▒▓▓▓▒▒▒░░░▒▒░░░░░▒▒███▒▓▒▓█████
+██▓▓▓████▓▓█▓▓▒    ░▒▒▓██████████████▒▒███████▓▒░▓▒▒▒▒▒▒▒▒▒▒▒█▓▒▒    ░▒▒▒░░░▒▒░░▒█▒▓▓███▒░░░▓██▒░░░░█▓▓▒▒░░▒  ▒██▓▒▓▒ ░░░░  ░░░ ░▒▒▒▒▒▒▒░░░░░░░░░░▒▒▓██▒▓▓▓▓▒▓▒▒▓
+▓▓▓▓▓▓▓███▓▓▓▓▓░▒▓▓▓▓▒▓▓▓████████████▒████▓█▓▒▒▒▒▒▒▒▒▒▒▒▓▓████▒     ▒▒▓▒░ ░░ ░▒▒▒▓▒▒▓▓████▓▒▒██▒▒░▒░████▓▒▓▓█▓▒▓░░░░ ░░░░▒░░▒▒▒░▒▓▓▒▒▒▓▓▓▓▓▓▒▓███████████▓███▓███
+▓▓▓██▓▓▓▓▓▓▓▓▓▓▓█▓▓▒▒▓▓███▓█████████▒▓█▓▓▓▓██▒▒▒▒▒▒▒▒▓██▓▓▓▓▒▒░    ▒▒▒▒▒░░░░░░▒▒▒▒░▒▒▓▒▒▒▓█████░▒▒  ▒███▓▓█████▓   ░░▒░░░▒░▓█▓▓▓███████▓▒▒▓▒▒▒▓█▓▓███████▓▓████▒ 
+▓▓▓▓▓▓▓▓▓▓▓█▓▓▓▓▓▒▒▒▒▓████▓█▓▓▓▓███▒▒▓███████▓▓▒▒▓▓▓███▓▓▒▒▒▒░    ▒▒▒▒░░░░▒▒▒░░▒▒▒▒▒▒▒▒▒▒▒▒█▓▒█▓██▓█▒▓▒▒▓█████▒░▒░▒░   ░░░▒███▓██████████▒▓█████▓▓██████████     
+▓▓▓▓▓▓▓▓▓▓▓▓▒▓▓░ ▒▓██████▒▓▓▓██████▒▒▓███████▓▓▒▓████▓▓▓▓▓▓▒▒░    ▒▓▒▒▒▒░░░░░░░░░▒▒▒▒▒▒▒▒▒▓▒▒▒█▓▒▓▓▒▒▓██████▒▒▒▒▒▒▒█▓▒░▒▒▓██▓░▒ ▒███████████████▓▓▓███████▒      
+▓▓▓██▓▓▓▓▓▓▓▓▓▓▓  ▓██████▓▓▓▓▒▒▓▓▓▓▓▓▓▓█▓▓██▓▓▒▒▓██████▓▒▒▒▒▒▒░   ▒▓▒▒▒▒░░░▒▒▒▒░░░▒▒▒▓██▓▒▓▓█▓▓█▓▓▒▒▓█████▒▓████▒█▓▓█▒▒██▒▒       ░█████████████████████▒        
+▓▓▓▓██▓▓▓▓▓▓▓▓▓▓░  ▒█████▒▓▓▓▓▓▓▓▓██▓███████▒▓▓▒▒███▓▓▓▒▒▒▒▒▒▒▒   ▒▓▒▒▒▒▒░░▒▒░░▒▒░▒▓▓▓█▓▓▓▓███▒█▒▒▓█████▓███████▒ ▓▒▓█▓▒▒░▒▓░▓██████▓██████████████▓             
+▓▓▓▓███▓▓██▓▓█▓▓░       ░▓▓█▓▓▓▓▓███▓███████▓░▒▒░   ░▒███████▓▒   ░▓▒▒▒▒░░░░░░ ░ ░▒█▓▒▓██▓▒████▒▒▓████████████████▒ ░▓▓▒▓██▓▓██▒▒▒▒▒████████████▒                
+▓▓▓▓▓▓▓███▓▓▓▓▓▓▓▒      ░▒▓▓▓▓▓▒▒▒▒▒▒▒▒▒▓▓▓▒░   ░▒▒▒▓██████▓▓▓▓░   ▒▒▒▒▒░░░   ░▒████▓▒▓███▓▒▒░▓▓▓▓██████████████████▒ ▒████████▓▓▒▒▒▓████████████▒        ░░░    
+█▓▓▓█▓▓▓▓▓▓▓▓▓█▓▓▓      ░▒▒▒▒░░░░░░░░░▒▒▓▓▒░ ░▒▓▓███████▓▓▓▓▓█▓▒   ▓▒▒▒▒░ ░▒▓██▒▒▒▓▒░░░▒░   ▒▒░▒█▓███████████████████▓░ ██████▓▒▒░░░░░▓█████████▓▓      ░▒▒▒▒    
+████▓▓▓▓▓▓▓██▓▓▓▒▓▒░░░░░░▒▒▒▒▒▒▒▒░▒▒░▒▒░░ ░░▒▓███████▓▓▓▓▓▓▓▓▓▓▒▓▓▒▓▓▓▒▒░▒█▒░▒▓░▒▓▓  ░░░   ░▒▒▒▓▓██████████████▓▓▓▓████▒ ░███▓▓▒▒▒▒▒▒░░██▓▓█████▓▓▒     ▒▒▒▒▓▓▓▓█
+███▓████▓▓▓▒▓██▓▓▓▒░▓█▒▒▓▓▓▓▓▓▒▒▒▒▒▒▒▒▓▓▓▒▒▓█▒███████████▓▓▓▓▓▓▓▓▓▒▓▓▓▒░▒▓▒▒▒▒▒▒▒▓▒▒░░   ░░▒▒▒▒███████████████▓▓▓▓▓▓██▓▓▓░ ▓█▓███▓▒▒▓▓▓▒▓▓▓██████▓▒    ░▒▒▓▒▒▓▓▓▓
+████▓██▓▓▓█▓▓▓█▓▓▓▓▓▓▒▓▓██▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒█▒████████████▓▓▓▓▓▓▒▒▓▓█▓▒▒▓▓▒▓▓▓░▒▒▓▓░░░▒▒▒▓█▓▓▓███████▓▓▒▒▓▓▓███▓███████▓██▓ ░▓████▒▒▓▒▓█▓▒███████▓▒  ░▒▒▓▓▒▓▒▒▒▒▒
+█████▓▓▓▓▓▓▓▓▓▓██▓▒▓▓▓█████████▓▓▓▓▓▓▓▓▓▓▓▓▒▒▓█████████▓▓▓▓▓▓▓▓▒▓█▓▓█▓▒▒▓█░▒█▓██▓▒▓░▒▓███████████████████████████████████████░▓███████████████████▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+██▓▓▓▓▓▓▓▓▒▓▓▓▓▒▒▒▓▓▒████████████▓▓▓▓▓▓▓▓▓▓▒▒░▒█████████▓▓▓▓▓▓▓▒█████▓▒▒▓█▓█▓█████████▓▓██████████████████████████████████████░░██████████████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+▓▓▓▓▓▓▓▓▓█▓▓▓▓▓▓▓▓▓▓▓████████▓▓▓▓▓▒▒▒▒░▒▒░░░░░▒███████████▓▓▓▓▓▒▒▓████▓▓██▓▓▓████████████████████▓▓████████████████████████████▓ ▒███████████▓▓▓▓▒░░▒▓▓▒▒▒▒▒▒▒▒▒▒
+█▓▓▓▓▓▓▓▓▓██▓▓▓▓▓▓▓▓▓██████▓▒▒▒▒▒▒░░░░▒▒▒▓▓▓▒▒▓██████████████▓▓▓▒▓▓▓██████████████████████████████▒▒█████████████████████████████▒ ▓███████████▓▓██▒▒▓▒▒▒▒▒▒▒▓▓▒▒
+▓▓▓▓▓▓▓▓▓▓▓██▓█▓▓▓▒▓▒██▓▒██████████████████████▓███████████████▓▓▓▓▓▓██████████████████████████████▒▒▓█████████████████████████████▓█████████████▓▒▒▒▒▒▒▒▒▒▒▓▓▓▒▒
+█▓▓██▓▓▓▓██████▓▓▓▓▓▒▓▓████████████████▓▓▓███▓▓██▓██████████████████████████████████████████████████████████▓███████████████▓░░░█████████████████▒▓▒▒▒▒▒▒▓▓▓▓▓▓▓▒
+▓▓▓███▓▓▓▓██▓▓██▓▓▓▓███████████████▓▓▓▓▒░▒▒▒▓▒▓███▓▓▓███████████████████████████████████████▓███████████████▓██████████████▓▒░░░░ ▒██▒██████████▒▒▓▓▓▒▒▒▒▒▓▓▓▒▒▒▒
+▓▓█▓██▓▓▓█▓▓▓▓▓██▓▓▓▓▒█████████▓▓▒░░░▒▓▒ ░░▒▓█████████▓▓████████████████████████████████▓▓▒▓█▓▒▓███▓██████▓█▓▓█████████████▓░▒▓███████▒░░░░░▒▒▒▓▒▒▒▒▓▒▒▒▓▓▓▒▒▒▒▒▒
+██████████▓██▓▓█▓░   ▒██████████▓▒▒░▒▓▓▓▒▒▒▓███▓████████▓██▓▓████████████████████████▓▓▓▒▒▒▒░░░░░░████████▒▒░▓████████████▓▒▓███▒▒▒▓██▓▓▓██████▓▒░▒░░▒▒▒░░░░░░░░▒
+█████▓█████▓▓▓▓▒░░░▒░▓███████████▓▒▒▒▒▒▒▒▒▒█▓▓▓█████████████████████████████████████▓▓▒▒▒▒▒▒░░░░░░░░▒████▓▒▒▒▒▒▓▒████████▓▓▓▓▓▓▓▒▒▒▓██▓▒▒▓████▓░░░▒▒▒░░░░░░▒░▒▒▒▒
+██████████▓▓▓▓▓▓▒▒▒▒▓▓████████████▓▓█▓▓▒▒▒██▓▒████████████████▒▒▓█████████████████▓▓▓▒▒▒▒▒▒▒▒░░░░░  ░▒▒▓██▓▓▓▒▒▒███▓▓▓▓▓▒▒▓▓█████▓▒▒░░░▒▒▓▓███▓░░░░░▒░░▒▒▒▒░▒▒▒▒▒
+▓▓██████████▓▓▓▓▓▓▓███████████████████▓▒▒░░░░▓▓▓▓█████████████▒▓█████████████████████▓█▓░░ ░░ ▒▓████▓▒▓█████▒▒▒▓▓▓▓▓▓█████▓▓▓▓▓▒▒▒▒▒▒░▒░░███▓▒░▒░░▒▒▒▒▒░▒░░░▒▒▒▒▒
+█▓▓▓▓▓▓█████▓▓▓▓█▓██████████████████▓▓▓█▓░░░░   ░▒▓███████████▒▒▒▓███████████████▓▒░░░░▒▒▒▒▓▓▒▓▓▓███▓▒▒▒░▒▓▓████████▓▓▓▓▓█▓▓▓██▓▒▒▒▓▓███████▒▓▒▒▒▒░░▒▒▒▒░░▒▒▒▒▒▒▒
+████▓▓███████▓▓▓██████▓▓███████████████▓▒░░░░▓▒▓██▓██████████▓▒▒▒▓▓█████▒▒▓▒░░░░▒▒▓▓▓▓█████████▒▒▒▓█▓█████████▓█▓▒▓███▓▓▓█▓▓▓▓█████████▓▓▒▓▓█▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+█████▓█▓▓▓▓▓▓▓▓▓▓▓▓▓█▓█▓▓█████████████▓▒▒░░░░▒░░░▒▓██████████▒▒▒▒▒▒▒▒░░░░░░▒▓▓█████████████████▓▓▓██████▓▓███▓▒▒▓▒▒███████▓██████████████████▓░░░░▒▒▒▒▒▒▒▒▓▓▓▒▒▒▒
+█▓█▓▓▓▓▓▓▓▓▓▓▓▓▓██▓▓▓█▓█▓▓▒█████████▓▓▓▒▒░░░░▒▒░▒░ ░█████▓▒▒▒░░░░▒▒▒▓▓▒▒▓███████████████████████████████▒▒████▓▒▒░▒░▒▓██████████████████████▒▓▒░    ▒██▓▒▒▒▒▒▒▒▒▒
+▓██▓▓██▓██▓▓▓▓▓▓▓█████▓██▓▓████████▓█▓▒▓▒▒▒▒░▒▒▒▒▒▒▒▒▓▒░░▒▒▒▓▓▓▓▓▓▓▓▓████████████████████████████████████████▓▓▓▒▒▒░░▒███████████████▓█████████▓▒▒▒░░  ▓▓▒▒▒▒▒▒▒▒▒
+█▓██▒▒▓▓▓▓▓▓▓▓███▓▓▓██▓██▓▒▓██▓▓███▒▓▓▒██▒▒▒▒▒▒▒▒▒▒░▒▒▒▒▒▒▓▓▓███████████████████████████████████████████████████▓▓▒▒░▒█████████▓██▓▓███▓▓▓▓▓██▒░░▒▓▓▓▒▒██▓▓▓▒▒▒▒▒
+██▓▓▓██▓█▓▓▓▓█▒▒▓██▓▒█████▓▒█████▒▒▒▓░▒▓▒▒░▒▓█▓▓████▓▒▒███▓▓████████████▓▒████▓█████████████████████████████████▓▓▒▓░ ▓██████▓▓█▓▓▓▓███▒▒░▒▒▓█▓▓█▓██▓▓████▓██▓▒▒░
+██▓██████████▒▒▒▓██▓▓▓█▓██████▓▒▒▒▒░░▒▒▒▒▒▓████▓▒▓▓▓▓▒▓███▓▓▒███▓████████▒░████████████████████████████████████▓▓▒░░░   ▓████▓▒▒▓▓█▓▓▓▓▓▒▒▒▒▓▓▒▒▒▓▓▓▒▒▓██████▓█▓▓
+▓██▓▓▓▓▓▓▓█████████▓▓▓███████▓██████▓▓▓▓█████████▓▒▒▓███████▓▓▓▓█████████▓░▒██▓▓▓▓██████████████████████████████▓▓▒░░░░░ ░░▒██▓▒▒▒▒██▓████▓▓▓▓▒▓▒▓▓▒▒▓█▓▓▓▓█████▓
+███▓▓▓▓▓▓▓█████████████████▓█████████████████████▓▓▓█▓▓▓█████▓████████████▒▒██▓█████████████████████████████████▓▓▒░░░░░▒▒▒███▓▒▒▒▒▒████████▓▒▒█▓▒▒▓▒▓█▓▓█████▓▓█
+███▓▓██▓███████████████████▓▓████████████████████▒▓▓▓▓▓▓▓▓▓▓█████▓██████████████████▓▓▓▒▓███████████████████████▓▒█████▓▓▓█████▒▒▒▒▒▓███████████████████▓█▓▓█▓▓██
+▓▓██▓▓▓▓▓▓███████████████████████████████████████▓▓████████▓▓▓▓▓███████████████▓▓▒▒▒▓▒▒░▒███████████▓▓██████████▓▓█████████████▓▒▒▒▒▒█████▓▓▓▓█▓▓████████▓▓▓▓█▓▒▓
+█▓██▓▓▓▓▓▓▓▓▓▓▓█████████▓▒▒▒▓▓████████████████████████████▓▒▓███████████████████▓▓▓▓▓▓▓▓▓▓█▓██████████▓▓▒▒▒▓████████▓███▓▒██████▓▒▒▒▒▓████████▓█▓▒▓██████████████
+████▓▓▓▓▓██████████████████████████████▓▒▒▒▒██████████████▓▒░▒█████▓▓████████████████████████████▓▓▓▒▒▒▒▒▒▒▒░▒▒▒▓▓▓█▒▓▓▓▓████████▓▒▒▒▓█▓▓▓▓▓▒▓▒▓██▓▓█▓███████████
+▓▓▓██▓▓▓▓▓▓██████████████████████████░░░░░░ ░▒▒▒▒▓█████████▓▓█▓███▓█████████████████████████▓▓▓▓▓▓▓▒▒▒▒░▓██▒▒▒▒░▒░▒▒▒░░▒░░░░░░▒▒▒▒▒▒▒▒▒▓▓▓▓▓▓█▓▓████▓▓███▓███████
+▓███▓▓▓▓▓▒▒▓████████████████████████▒░░░░░░░▒▒▒▒▒░░▒░░▒▒▒▓█▓▒█▓███▓▓▒▒▒▒▒▓████████████████▓▓▓▓▓▓▓███▒▒▒▒▓█▓▓▒▓███▓▓▓▓▓▒▒▒▒░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓▒▓▓▓█▓███████
+▓▓▓▓▓█▓▓▓▒▓▓▓▓████████████████████▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░░ ░░░▒█▓███▓█▓▒▒▒▒░▒▓████████████████▓▒▒▒▒▒▓█▓▓▒▒██████▓██████████████▓▒▒▒▒▒▒▒▒▒▒▒▓▓▒▒▒▒▒▒▒▒▒▒▒▒▓▒▒▒▒▒▓▒▒▒
+▓▓▓▓▓██▓▓▓▓▓▒▒███████████████▓▓▓▒▓█▓▓▒▓▓▒▓▓▓▓▒▓▒▒▒▒▒▒▒░░░░▒▒▒▓██████▓▒░▒▒▒▒▒▓███████████████▓▒▒▓▓▒▒▒▒▒▓▒▒▒▓█████▒▓█████▓▒▓████████████████▓▓▓████████████████▓▓▓▓
+▓█▓▓▓▓▓█▓▓▓▓▓▓▓██▓████████████████▓▓▒▓▓▒▓▓█▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓▒▓████████▒▒▒▒▒░▒░░░▒▓███▓██████▓▓▒▒▓▒▒▒▒▒▒▒▒▒▒▒▒▒▒▓██▓▒████▓▓████████████████████████████████████████""" + BgColor.OFF)
 
+def load_title():
+    print("""          _____                    _____                    _____                    _____          
+         /\    \                  /\    \                  /\    \                  /\    \         
+        /::\    \                /::\    \                /::\    \                /::\____\        
+       /::::\    \               \:::\    \              /::::\    \              /:::/    /        
+      /::::::\    \               \:::\    \            /::::::\    \            /:::/    /         
+     /:::/\:::\    \               \:::\    \          /:::/\:::\    \          /:::/    /          
+    /:::/__\:::\    \               \:::\    \        /:::/__\:::\    \        /:::/____/           
+   /::::\   \:::\    \              /::::\    \       \:::\   \:::\    \      /::::\    \           
+  /::::::\   \:::\    \    ____    /::::::\    \    ___\:::\   \:::\    \    /::::::\____\________  
+ /:::/\:::\   \:::\____\  /\   \  /:::/\:::\    \  /\   \:::\   \:::\    \  /:::/\:::::::::::\    \ 
+/:::/  \:::\   \:::|    |/::\   \/:::/  \:::\____\/::\   \:::\   \:::\____\/:::/  |:::::::::::\____\
+\::/   |::::\  /:::|____|\:::\  /:::/    \::/    /\:::\   \:::\   \::/    /\::/   |::|~~~|~~~~~     
+ \/____|:::::\/:::/    /  \:::\/:::/    / \/____/  \:::\   \:::\   \/____/  \/____|::|   |          
+       |:::::::::/    /    \::::::/    /            \:::\   \:::\    \            |::|   |          
+       |::|\::::/    /      \::::/____/              \:::\   \:::\____\           |::|   |          
+       |::| \::/____/        \:::\    \               \:::\  /:::/    /           |::|   |          
+       |::|  ~|               \:::\    \               \:::\/:::/    /            |::|   |          
+       |::|   |                \:::\    \               \::::::/    /             |::|   |          
+       \::|   |                 \:::\____\               \::::/    /              \::|   |          
+        \:|   |                  \::/    /                \::/    /                \:|   |          
+         \|___|                   \/____/                  \/____/                  \|___|          
+                                                                                                    """)
 
-    while True:
-        try:
-            choice = int(input("Enter player number: ")) 
-            if 1 <= choice <= len(available):
-                return available[choice - 1]
+def DisplayProvinces(province_objects=None):
+    for p in PROVINCES:
+        if province_objects:
+            prov = next((x for x in province_objects if x.name == p), None)
+            if prov and prov.owner:
+                color_code = prov.owner.ansi_color
+                print(f"{color_code}{p}{Colors.RESET}")
             else:
-                print(f"Enter a number between 1 and {len(available)}")
-        except ValueError:
-            print(f"Enter a number between 1 and {len(available)}")
-
-
-
-def create_deck():
-    deck =([ATTACK] * 4 + [NOPE]*5 + [SHUFFLE]*4 + [SEE] * 5 + [FAVOR] * 4 + [SKIP] * 4 + CATS * 4)
-    random.shuffle(deck)
-    return deck
-
-def show_cards():
-    for player in players:
-        player.show_hand()
-        print("")
-        input("Press enter when done... ")
-        clear()
-
-def deal_card(players,deck):
-    for player in players:
-        player.hand.append(DEFUSE)
-        while len(player.hand) < 8:
-            card = deck.pop()
-            player.hand.append(card)
-        
-
-def getting_card():
-    print("Wait")
-    select = "Getting card..."
-    for i in range(3):
-        sleep(0.5)
-        print(".", end="", flush=True)
-    print()
-    sleep(0.5)
-    clear()
-
-
-
-def player_turn(player):
-    clear()
-    while True:
-        if player.extra_turns > 0:
-            betterprint(f" {player.name} has {player.extra_turns} extra turn(s) remaining!\n")
-            print("🔴" * player.extra_turns + " TURNS REMAINING\n")
-
-    
-        betterprint(f"{player.name}, what would you like to do?\n")
-        print("1) Play a card")
-        print("2) End your turn and draw a card")
-        print("3) Display your cards")
-        choice = input("")
-        if choice in ["1","2","3"]:
-            return choice
+                print(p)
         else:
-            print("Not an option\n")
+            print(p)
 
+def DisplayMap():
+    print("""⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣄⣠⣀⡀⣀⣠⣤⣤⣤⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                    ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣄⢠⣠⣼⣿⣿⣿⣟⣿⣿⣿⣿⣿⣿⣿⣿⡿⠋⠀⠀⠀⢠⣤⣦⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠰⢦⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                    ⠀⠀⠀⠀⠀⠀⠀⠀⣼⣿⣟⣾⣿⣽⣿⣿⣅⠈⠉⠻⣿⣿⣿⣿⣿⡿⠇⠀⠀⠀⠀⠀⠉⠀⠀⠀⠀⠀⢀⡶⠒⢉⡀⢠⣤⣶⣶⣿⣷⣆⣀⡀⠀⢲⣖⠒⠀⠀⠀⠀⠀⠀⠀
+                    ⢀⣤⣾⣶⣦⣤⣤⣶⣿⣿⣿⣿⣿⣿⣽⡿⠻⣷⣀⠀⢻⣿⣿⣿⡿⠟⠀⠀⠀⠀⠀⠀⣤⣶⣶⣤⣀⣀⣬⣷⣦⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣦⣤⣦⣼⣀⠀
+                    ⠈⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠛⠓⣿⣿⠟⠁⠘⣿⡟⠁⠀⠘⠛⠁⠀⠀⢠⣾⣿⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠏⠙⠁
+                    ⠀⠸⠟⠋⠀⠈⠙⣿⣿⣿⣿⣿⣿⣷⣦⡄⣿⣿⣿⣆⠀⠀⠀⠀⠀⠀⠀⠀⣼⣆⢘⣿⣯⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡉⠉⢱⡿⠀⠀⠀⠀⠀
+                    ⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣟⡿⠦⠀⠀⠀⠀⠀⠀⠀⠙⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⡗⠀⠈⠀⠀⠀⠀⠀⠀
+                    ⠀⠀⠀⠀⠀⠀⠀⠀⢻⣿⣿⣿⣿⣿⣿⣿⣿⠋⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⢿⣿⣉⣿⡿⢿⢷⣾⣾⣿⣞⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠋⣠⠟⠀⠀⠀⠀⠀⠀⠀⠀
+                    ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⣿⣿⣿⠿⠿⣿⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣾⣿⣿⣷⣦⣶⣦⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⠈⠛⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                    ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠻⣿⣤⡖⠛⠶⠤⡀⠀⠀⠀⠀⠀⠀⠀⢰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠁⠙⣿⣿⠿⢻⣿⣿⡿⠋⢩⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                    ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠙⠧⣤⣦⣤⣄⡀⠀⠀⠀⠀⠀⠘⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⠀⠀⠘⣧⠀⠈⣹⡻⠇⢀⣿⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+                    ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⣿⣿⣿⣿⣿⣤⣀⡀⠀⠀⠀⠀⠀⠀⠈⢽⣿⣿⣿⣿⣿⠋⠀⠀⠀⠀⠀⠀⠀⠀⠹⣷⣴⣿⣷⢲⣦⣤⡀⢀⡀⠀⠀⠀⠀⠀⠀
+                    ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⢿⣿⣿⣿⣿⣿⣿⠟⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⣿⣷⢀⡄⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠂⠛⣆⣤⡜⣟⠋⠙⠂⠀⠀⠀⠀⠀
+                    ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣿⣿⣿⣿⠟⠀⠀⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣿⠉⣿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣤⣾⣿⣿⣿⣿⣆⠀⠰⠄⠀⠉⠀⠀
+                    ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣸⣿⣿⡿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢹⣿⡿⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢻⣿⠿⠿⣿⣿⣿⠇⠀⠀⢀⠀⠀⠀
+                    ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣿⡿⠛⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⢻⡇⠀⠀⢀⣼⠗⠀⠀
+                    ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⠃⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⠁⠀⠀⠀
+                    ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⠒⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀""")
 
-
-
-
-
-def draw_card(player,deck):
-    announce_private_action(player, "DRAWING A CARD")
-    card = deck.pop(0)
-    player.hand.append(card)
-    getting_card()
-    betterprint(f"You drew a {card}!!!\n")
-    sleep(2)
-    player.show_hand()
-    input("Done reading? Press Enter to move on...")
-    announce_players_can_look()
-    clear()
-    return check(player)
-
-
-def use_card(player):
-    clear()
-    betterprint("Which card would you like to use? (enter a number)\n")
-    player.show_hand()
-    while True:
-        try:
-            playerinput = int(input())
-            if 1 <= playerinput <= len(player.hand):
-                break
-            betterprint(f"Enter a number between 1 and {len(player.hand)}")
-        except ValueError:
-            betterprint(f"Enter a number between 1 and {len(player.hand)}")
-    card_selected = player.hand[playerinput - 1]
-    player.hand.pop(playerinput - 1)
-    return card_selected
-
-last_action = None
-last_action_player = None
-last_action_target = None
-favor_cancelled = False
-
-
-def card_played(card_selected, player, players, deck):
-    global last_action, last_action_player, last_action_target
-    
-    if card_selected == DEFUSE:
-        betterprint("You can't use a defuse, you didn't pull an exploding kitten...")
-        sleep(1)
-        clear()
-        return None
-    elif card_selected in CATS:
-        return cat_combos(player, players)
-    elif card_selected == ATTACK:
-        last_action = "attack"
-        last_action_player = player
-        last_action_target = None
-        announce_public_action(player, "ATTACK")
-        player.has_played_attack = True
-        return attack(player, players)
-    elif card_selected == NOPE:
-        announce_public_action(player, "NOPE")
-        return nope()
-    elif card_selected == SKIP:
-        announce_public_action(player, "SKIP")
-        player.has_played_skip = True
-        return skip(player)
-    elif card_selected == SHUFFLE:
-        announce_public_action(player, "SHUFFLE")
-        return shuffle(deck)
-    elif card_selected == FAVOR:
-        last_action = "favor"
-        last_action_player = player
-        last_action_target = None
-        announce_private_action(player, "FAVOR")
-        return favor(player, players) 
-    elif card_selected == SEE:
-        announce_private_action(player, "SEE THE FUTURE")
-        return seethefuture(deck)
-    return None
-
-
-def attack(player,players):
-    betterprint(f"{player.name} played ATTACK! Next player takes 2 turns\n")
-    sleep(1)
-    current_index = players.index(player)
-    #loops through every player starting with the next player
-    for i in range(1,len(players)):
-        #calculates index of next player (wraps around)
-        next_player = players[(current_index + i) % len(players)]
-        if next_player.alive:
-            next_player.extra_turns += 2
-            betterprint(f" {next_player.name} now has {next_player.extra_turns} total turns to take! \n")
-            break
-
-    return "attack"
-    #handle in main loop
-
-def nope():
-    global last_action, last_action_player, last_action_target, players, favor_cancelled
-    
-    if last_action is None:
-        betterprint("There's no action to NOPE!\n")
-        sleep(1)
-        return "nope_failed"
-    
-    betterprint(f"NOPE! The {last_action} by {last_action_player.name} is cancelled!\n")
-    sleep(1)
-    
-    if last_action == "attack":
-        current_index = players.index(last_action_player)
-        for i in range(1, len(players)):
-            next_player = players[(current_index + i) % len(players)]
-            if next_player.alive:
-                if next_player.extra_turns >= 2:
-                    next_player.extra_turns -= 2
-                else:
-                    next_player.extra_turns = 0
-                betterprint(f"Removed 2 extra turns from {next_player.name}\n")
-                break
-    
-    elif last_action == "favor":
-
-        favor_cancelled = True
-        betterprint("The favor has been cancelled! No cards will be stolen.\n")
-
-    
-
-    if last_action != "favor":
-        last_action = None
-        last_action_player = None
-        last_action_target = None
-    
-    return "nope_success"
-
-def skip(player):
-    betterprint(f"{player.name} used SKIP! Their turn is skipped\n")
-    sleep(1)
-    return "skipped"
-    #handle in main loop
-
-def shuffle(deck):
-    betterprint("Shuffling the deck...\n")
-    random.shuffle(deck)
-    sleep(1)
-    betterprint("Deck shuffled\n")
-    return "shuffled"
-    #should work
-
-
-def favor(current_player, players):
-    global last_action, last_action_target, favor_cancelled
-    
-    # Check if this favor was cancelled BEFORE doing anything
-    if favor_cancelled:
-        favor_cancelled = False
-        last_action = None
-        last_action_player = None
-        last_action_target = None
-        betterprint("The favor was cancelled! No cards were stolen.\n")
-        return "favor_cancelled"
-
-    target = select_target(current_player, players)
-    if target is None:
-        return "favor_failed"
-
-    last_action_target = target
-    betterprint(f"{current_player.name} is asking for a card from {target.name}!")
-
-    sleep(1)
-    clear()
-    print(f"{target.name}'s hand (only {target.name} should see this):")
-    sleep(5)
-    target.show_hand()
-
-    while True:
-        try:
-            card_input = input(f"{target.name}, which card would you give to {current_player.name}? (enter number): ")
-            card_index = int(card_input)
-            if 1 <= card_index <= len(target.hand):
-                break
+def DisplayProvinceOwner(province_objects, prov_name):
+    for prov in province_objects:
+        if prov.name == prov_name:
+            if prov.owner:
+                color_code = prov.owner.ansi_color
+                print(f"{color_code}{prov.name} is owned by {prov.owner.name}{Colors.RESET}")
             else:
-                print(f"Invalid choice!!! Choose a number between 1 and {len(target.hand)}")
-        except ValueError:
-            print(f"Invalid choice!!! Choose a number between 1 and {len(target.hand)}")
+                print(f"{prov.name} has no owner.")
+            return
+    print("Province not found.")
 
-    stolen_card = target.hand.pop(card_index - 1)
-    current_player.hand.append(stolen_card)
-    clear()
-    betterprint(f"{current_player.name} has received {stolen_card} from {target.name}! \n")
-    sleep(3)
-    announce_players_can_look()
-    
-    last_action = None
-    last_action_player = None
-    last_action_target = None
-    
-    return "favor_done"
-
-
-def seethefuture(deck):
-    betterprint("You see the future! Here are the next three cards in the deck:\n")
-    top_cards = deck[:3]
-    for i,card in enumerate(top_cards,1):
-        print(f"{i}: {card}")
-    sleep(2)
-    input("Press enter to continue...")
-    clear()
-    announce_players_can_look()
-    return "Seen_the_future"
-    #should work
-
-def cat_combos(player, players):
-    cat_cards_in_hand = [card for card in player.hand if card in CATS]
-    
-    if len(cat_cards_in_hand) < 2:
-        betterprint("You don't have enough cat cards to make a combo! You need at least 2 cat cards.")
-        return "cat_failed"
-
-    cats = []
-    for cat in CATS:
-        if cat_cards_in_hand.count(cat) >= 2:
-            cats.append(cat)
-    
-    if not cats:
-        betterprint("You don't have two of the same cat cards to make a combo!!!")
-        betterprint("You have:\n")
-        for cat in CATS:
-            count = cat_cards_in_hand.count(cat)
-            if count > 0:
-                print(f"- {cat}: {count}")
-        sleep(2)
-        return "cat_failed"
-
-    betterprint("You have these cats with 2 or more copies:\n")
-    for i, cat in enumerate(cats, 1):
-        count = cat_cards_in_hand.count(cat)
-        print(f"{i}: {cat} (x{count})")
-    
-    while True:
-        try:
-            choice = int(input("Choose a cat card to pair (enter number): "))
-            if 1 <= choice <= len(cats):
-                break
-            print(f"Enter a number between 1 and {len(cats)}")
-        except ValueError:
-            print(f"Enter a number between 1 and {len(cats)}")
-        
-    chosen_cat = cats[choice - 1]
-    player.hand.remove(chosen_cat)
-    player.hand.remove(chosen_cat)
-
-    target = select_target(player, players)
-    if target is None:
-        return "cat_failed"
-    
-    announce_private_action(player, "CAT COMBO")
-    print(f"📋 {target.name}'s hand (only {player.name} should see this):")
-    target.show_hand()
-    
-    while True:
-        try:
-            card_input = input(f"{target.name}, which card will you give to {player.name}? (enter number): ")
-            card_index = int(card_input)
-            if 1 <= card_index <= len(target.hand):
-                break
-            print(f"Enter a number between 1 and {len(target.hand)}")
-        except ValueError:
-            print(f"Enter a number between 1 and {len(target.hand)}")
-    
-    stolen_card = target.hand.pop(card_index - 1)
-    player.hand.append(stolen_card)
-    betterprint(f"{player.name} stole {stolen_card} from {target.name}!\n")
-    announce_players_can_look()
-    return "cat_done"
-    
-
-
-    
-
-
-def check(player):
-    if KITTEN in player.hand:
-        betterprint("YOU PULLED AN EXPLODING KITTEN!!! 💣💣💣 \n")
-        sleep(1)
-        if DEFUSE in player.hand:
-            reply = input("You have a defuse!! Do you wanna use it? (yes or no) ")
-            if reply.lower() == "yes":
-                player.hand.remove(DEFUSE)
-                player.hand.remove(KITTEN)
-                betterprint("DEFUSE is used! You survived!")
-                return True
-            else:
-                player.hand.remove(KITTEN)
-                player.alive = False
-                betterprint(f"{player.name} has exploded 💥 , They're out of the game!!")
-                sleep(1)
-                return False
+def DisplayTroopStatus(province_objects):
+    for prov in province_objects:
+        if prov.owner:
+            color_code = prov.owner.ansi_color
+            print(f"{color_code}{prov.name}: Infantry={prov.infantry}, Tank={prov.tank}, Commando={prov.commando} | Owner: {prov.owner.name}{Colors.RESET}")
         else:
-            player.hand.remove(KITTEN)
-            player.alive = False
-            betterprint(f"{player.name} has exploded 💥 , They're out of the game!!")
-            sleep(1)
-            return False
-    return True
+            print(f"{prov.name}: Infantry={prov.infantry}, Tank={prov.tank}, Commando={prov.commando} | No owner")
 
+# ==================== SETUP ====================
+def GetNumPlayers():
+    num_players = int(input("How many people are playing RISK today?\n"))
+    while num_players < 1 or num_players > 6:
+         num_players = int(input("How many people are playing RISK today?\n"))
+    
+    return num_players
 
-def intro():
-    clear()
-    betterprint("-Welcome to EXPLODDDINGGG KITTTEEENNNSSSS 💣💣💣-\n")
-    betterprint("Do you know how to play?? (yes or no) ")
-    play = input("")
-    if play.lower() == "yes":
-        pass
+def FetchPlayerNames(num_players):
+    return [input(f"Player {i+1} name: ") for i in range(num_players)]
+
+def GetPlayersColors(player_names):
+    colors = []
+    for name in player_names:
+        color = input(f"{name}, choose your color (red/green/blue/yellow/cyan/magenta/white): ").lower()
+        colors.append(color)
+    return colors
+
+def ClaimProvince(players, province_objects):
+    """Randomly assign provinces to players"""
+    import random
+    random.shuffle(PROVINCES)
+    
+    num_players = len(players)
+    provinces_per_player = len(PROVINCES) // num_players
+    extra = len(PROVINCES) % num_players
+    
+    idx = 0
+    print("\n=== Randomly Assigning Provinces ===\n")
+    
+    for i, player in enumerate(players):
+        num_to_give = provinces_per_player + (1 if i < extra else 0)
+        for _ in range(num_to_give):
+            if idx < len(PROVINCES):
+                prov_name = PROVINCES[idx]
+                prov = next((p for p in province_objects if p.name == prov_name), None)
+                if prov:
+                    prov.owner = player
+                    player.provinces.append(prov)
+                    print(f"{prov.name} assigned to {player.name}")
+                idx += 1
+
+# ==================== ACTIONS ====================
+def is_adjacent(prov1, prov2):
+    """Improved adjacency check"""
+    if not prov1 or not prov2:
+        return False
+    p1 = prov1.strip().lower()
+    p2 = prov2.strip().lower()
+    
+    for name, neighbors in ADJACENCY.items():
+        if name.lower() == p1 and any(n.lower() == p2 for n in neighbors):
+            return True
+        if name.lower() == p2 and any(n.lower() == p1 for n in neighbors):
+            return True
+    return False
+
+def LaunchAttack(current_player, province_objects):
+    print("\n=== Launching Attack ===")
+    DisplayTroopStatus(province_objects)  # Show current status
+    
+    from_prov = input("Attack from which province? ").strip()
+    to_prov = input("Attack which province? ").strip()
+    
+    if not from_prov or not to_prov:
+        print("Please enter province names.")
+        return
+    
+    # Find attacking province (must be owned by current player)
+    from_p = next((p for p in province_objects 
+                   if p.name.lower() == from_prov.lower() 
+                   and p.owner == current_player), None)
+    
+    # Find target province
+    to_p = next((p for p in province_objects 
+                 if p.name.lower() == to_prov.lower()), None)
+    
+    if not from_p:
+        print(f"You do not own '{from_prov}' or it doesn't exist.")
+        return
+    if not to_p:
+        print(f"Province '{to_prov}' not found.")
+        return
+    if not to_p.owner or to_p.owner == current_player:
+        print("You cannot attack your own or neutral province.")
+        return
+    if not is_adjacent(from_prov, to_prov):
+        print(f"'{from_prov}' and '{to_prov}' are not adjacent!")
+        print("Tip: Check the ADJACENCY dictionary or try different provinces.")
+        return
+    
+    # Combat
+    attack_roll = random.randint(1,6) + random.randint(1,6)
+    defend_roll = random.randint(1,6) + random.randint(1,6)
+    print(f"Attack roll: {attack_roll}  |  Defense roll: {defend_roll}")
+    
+    if attack_roll > defend_roll:
+        print(f"\nVICTORY! {to_prov} captured!")
+        # Transfer ownership
+        old_owner = to_p.owner
+        to_p.owner = current_player
+        current_player.provinces.append(to_p)
+        if old_owner and to_p in old_owner.provinces:
+            old_owner.provinces.remove(to_p)
     else:
-        print("In this game, the goal is to be the last player standing.\n")
-        print("Each player starts with 8 cards including a defuse. \n")
-        print("""On your turn you can:
-- Draw a card (risky!)
-- Play a card with special effects:
-• ATTACK: Next player takes 2 turns
-• SKIP: End your turn without drawing
-• FAVOR: Steal a card from another player
-• SHUFFLE: Randomize the deck
-• SEE THE FUTURE: Look at top 3 cards
-• CAT CARDS: Combine to steal from others
-• NOPE: Cancel the previous action
+        print("Attack failed.")
 
-If you draw the EXPLODING KITTEN, you need a defuse to survive!
-Good luck and have fun!!!""")
-        sleep(5)
-        input("Done reading? Press Enter to move on...")
-        clear()
+def RecruitSoldiers():
+    print("Recruiting...")
+    r1, r2 = random.randint(1,6), random.randint(1,6)
+    print(f"Rolls: {r1} {r2}")
+    if (r1 + r2) % 2 == 0:
+        print("Extra troops recruited!")
 
-
+# ==================== MAIN ====================
 def main():
-    current = 0
-    intro()
+    load_soldiers()
+    load_title()
+    
+    num_players = GetNumPlayers()
+    player_names = FetchPlayerNames(num_players)
+    player_colors = GetPlayersColors(player_names)
+    
+    # Create Player objects with colors
+    players = [Player(name, color) for name, color in zip(player_names, player_colors)]
+    
+    # Create Province objects
+    province_objects = [Province(name) for name in PROVINCES]
+    
+    # Randomly assign provinces
+    ClaimProvince(players, province_objects)
+    
+    print("\n=== GAME START ===")
+    turn = 0
     while True:
-        try:
-            numplayer = int(input("How many players are there? (2-4)  "))
-            if 2<= numplayer <= 4:
-                break
-        except ValueError:
-            print("Invalid input! please enter a number")
-    for i in range(numplayer):
-        name = input(f"Player {i+1}, what should I call you?  ")
-        players.append(Player(name))
-    clear()
-    
-    deck = create_deck()
-    deal_card(players,deck)
-    show_cards()
-
-    #add exploding kittens to deck after players recieved cards 
-    for i in range(numplayer-1):
-        deck.append(KITTEN)
-    random.shuffle(deck)
-
-
-    while sum(player.alive for player in players) > 1:
-        player = players[current]
-
-        if not player.alive:
-            current = (current + 1) % len(players)
-            continue
-            
-        player.has_played_attack = False
-        player.has_played_skip = False
-
-        if player.extra_turns > 0:
-            betterprint(f"🔴🔴🔴 {player.name} has {player.extra_turns} turn(s) remaining! 🔴🔴🔴\n")
-            sleep(1)
-
-
-        turn_ended = False
-
-        while not turn_ended:
-            choice = player_turn(player)
-            if choice == "1":
-                card_selected = use_card(player)
-                if card_selected:
-                    result = card_played(card_selected,player,players,deck)
-                    if result == "skipped":
-                        betterprint(f"{player.name}'s turn is over!\n")
-                        sleep(2)
-                        turn_ended = True
-                        break
-                    elif result == "attack":
-                        betterprint(f"{player.name}'s turn is over!\n")
-                        sleep(2)
-                        turn_ended = True
-                        attack_played = True
-                        break
-                    elif result == "nope_success":
-                        betterprint("The action was cancelled by NOPE!\n")
-                        sleep(1)
-                        break
-
-                    elif result =="nope_failed":
-                        continue
-
-                    elif result == "favor_cancelled":
-                        betterprint("The favor was cancelled!\n")
-                        sleep(1)
-                        continue
-
-                    else:
-                        betterprint("You can play another card or end your turn!\n")
-                        sleep(1)
-                        continue
-                else:
-                    continue
+        current = players[turn % len(players)]
+        print(f"\n{current.name}'s Turn!")
+        DisplayMap()
+        DisplayTroopStatus(province_objects)
         
-            elif choice == "2":
-                betterprint(f"{player.name} ends their turn and draws a card!\n")
-                if draw_card(player,deck) == False:
-                    turn_ended = True
-                    break
-                else:
-                    turn_ended = True
-                    break
-
-            elif choice == "3":
-                player.show_hand()
-                input("Done reading? Press Enter to move on...")
-                clear()
-                continue
-
-        if player.extra_turns > 0:
-            player.extra_turns -= 1
-            if player.extra_turns > 0:
-
-                betterprint(f"🔄 {player.name} has {player.extra_turns} turn(s) remaining!\n")
-                sleep(1)
-                continue
-            else:
-
-                current = (current + 1) % len(players)
-                while not players[current].alive:
-                    current = (current + 1) % len(players)
-        else:
-            current = (current + 1) % len(players)
-            while not players[current].alive:
-                current = (current + 1) % len(players)
-        last_action = None
-        last_action_player = None
-        last_action_target = None
-
-    for player in players:
-        if player.alive:
-            betterprint(f"\n🏆 {player.name} is the winner!!! 🏆\n")
+        action = input("Action (A=Attack, R=Recruit, Q=Quit): ").upper()
+        if action == "A":
+            LaunchAttack(current, province_objects)
+        elif action == "R":
+            RecruitSoldiers()
+        elif action == "Q":
             break
-main()
-        
+        turn += 1
 
-    
-
-
+if __name__ == "__main__":
+    main()
