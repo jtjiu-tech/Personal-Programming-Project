@@ -405,15 +405,16 @@ def seethefuture(deck):
     #should work
 
 def cat_combos(player,players):
+    #basically adds all cards in players hand that are in the list CATS into a new list
     cat_cards_in_hand = [card for card in player.hand if card in CATS]
     
-    if len(cat_cards_in_hand) <1:
+    if len(cat_cards_in_hand) <2:
         betterprint("You don't have enough cat cards to make a combo! You need at least 2 cat cards.")
         return "cat_failed"
 
     cats = []
     for cat in CATS:
-        if cat_cards_in_hand.count(cat) >= 2:
+        if player.hand.count(cat) >= 2:
             cats.append(cat)
     
     if not cats:
