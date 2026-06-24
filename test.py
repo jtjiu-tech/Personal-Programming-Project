@@ -1799,7 +1799,6 @@ def main():
     """Main code for the game, initially called"""
     while True:
         print("If you're playing the game, remove the line with sys.exit (use command F or smth idk)")
-        sys.exit()########remove this line if playing
         get_initial_inputs()#the initial input loop ends as soon as the game starts
         grid, player_info = create_classes()#assigns variables to the classes and makes them direct objects to call
         player_info.player_dicts = add_colours(player_info)#gives each player colours
