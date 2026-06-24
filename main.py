@@ -414,7 +414,7 @@ def cat_combos(player,players):
 
     cats = []
     for cat in CATS:
-        if player.hand.count(cat) >= 2:
+        if cat_cards_in_hand.count(cat) >= 2:
             cats.append(cat)
     
     if not cats:
