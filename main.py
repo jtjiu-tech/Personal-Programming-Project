@@ -12,8 +12,6 @@ def betterprint(text):
         print(character, end = "",flush = True,)
         sleep(0.02)
 
-def setupMusic():
-    pygame.mixer.init()
 
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -413,7 +411,7 @@ def cat_combos(player,players):
         return "cat_failed"
 
     cats = []
-    for cat in CATS:
+    for cat in CATS:#stupid
         if cat_cards_in_hand.count(cat) >= 2:
             cats.append(cat)
     
@@ -429,7 +427,7 @@ def cat_combos(player,players):
 
     betterprint("You have these cats with 2 or more copies:\n")
 
-    for i,cat in enumerate(cats,1):
+    for i,cat in enumerate(cats,1): #not dry coding
         count = cat_cards_in_hand.count(cat)
         print(f"{i}: {cat} (x{count})")
     
