@@ -593,7 +593,6 @@ def main():
                         betterprint(f"{player.name}'s turn is over!\n")
                         sleep(2)
                         turn_ended = True
-                        attack_played = True
                         break
                     elif result == "nope_success":
                         betterprint("The action was cancelled by NOPE!\n")
